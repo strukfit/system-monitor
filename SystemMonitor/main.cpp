@@ -14,14 +14,8 @@
 
 #include "CPUInfo.h"
 #include "MEMInfo.h"
+#include "DisksInfo.h"
 
-
-ULARGE_INTEGER getDiskSpace(LPCWSTR drive) 
-{
-    ULARGE_INTEGER freeBytesAvailable, totalNumberOfBytes, totalNumberOfFreeBytes;
-    GetDiskFreeSpaceEx(drive, &freeBytesAvailable, &totalNumberOfBytes, &totalNumberOfFreeBytes);
-    return totalNumberOfBytes;
-}
 
 QLabel* cpuLabel;
 QLabel* memLabel;
@@ -48,12 +42,14 @@ int main(int argc, char** argv)
 
     CPUInfo cpuInfo;
     MEMInfo memInfo;
+    
+    DisksInfo disksInfo;
 
     auto timer = new QTimer(centralWidget);
     QObject::connect(timer, &QTimer::timeout, [&] {
         cpuInfo.updateInfo();
         memInfo.updateInfo();
-        ULARGE_INTEGER totalDiskUsage = getDiskSpace(L"C:");
+        disksInfo.updateInfo();
 
         cpuLabel->setText(QString(
             "CPU_USAGE: %1\n"
@@ -85,8 +81,18 @@ int main(int argc, char** argv)
             .arg(memInfo.availPageFileGB())
             .arg(memInfo.speedMHz()));
         
-        diskLabel->setText(QString("DISK_TOTAL: %1").arg(totalDiskUsage.QuadPart / 1024.f / 1024.f / 1024.f));
-
+        diskLabel->clear();
+        for (auto& disk : disksInfo.allDisks())
+        {
+            diskLabel->setText(diskLabel->text().append(QString(
+                "DISK: %1\n"
+                "DISK_USAGE: %2/%3\n"
+                "DISK_FREE_SPACE: %4\n\n")
+                .arg(disk.diskLetter())
+                .arg(disk.totalUsedBytes() / 1024.f / 1024.f / 1024.f)
+                .arg(disk.totalBytes() / 1024.f / 1024.f / 1024.f)
+                .arg(disk.totalFreeBytes() / 1024.f / 1024.f / 1024.f)));
+        }
     });
     timer->start(1000);
 
