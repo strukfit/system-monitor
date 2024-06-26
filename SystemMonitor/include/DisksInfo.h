@@ -12,7 +12,7 @@ public:
 	~DisksInfo();
 
 	void updateInfo();
-	std::vector<Disk> allDisks() const;
+	const std::vector<Disk>& allDisks() const;
 
 private:
 	std::vector<Disk> m_allDisks;

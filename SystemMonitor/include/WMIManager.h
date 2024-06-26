@@ -18,7 +18,7 @@ class WMIManager
 public:
 	WMIManager();
 	~WMIManager();
-
+	
 	void execQuery(const std::wstring& query, const std::wstring& property, std::vector<WMIValue>& results);
 
 private:

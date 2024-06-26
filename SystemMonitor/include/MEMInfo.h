@@ -4,7 +4,8 @@
 #include <windows.h>
 #include <comdef.h>
 #include <Wbemidl.h>
-#include <QMessageBox>
+#include <memory>
+#include "WMIManager.h"
 #pragma comment(lib, "wbemuuid.lib")
 //#else
 //#include <sys/sysinfo.h>
@@ -15,7 +16,7 @@
 class MEMInfo
 {
 public:
-	MEMInfo();
+	MEMInfo(std::shared_ptr<WMIManager> p_WMIManager);
 	~MEMInfo();
 
 	void updateInfo();
@@ -30,6 +31,8 @@ public:
 
 private:
 	void updateSpeedInfo();
+
+	std::shared_ptr<WMIManager> m_WMIManager;
 
 	float m_totalGB;
 	float m_availGB;

@@ -30,7 +30,7 @@ public:
 
 	std::wstring diskLetter() const;
 
-	float activeTime() const;
+	byte activeTime() const;
 	float readSpeed() const;
 	float writeSpeed() const;
 	float avgResponseTime() const;
@@ -50,7 +50,7 @@ private:
 	const std::wstring m_diskLetter;
 	const std::string m_diskModel;
 
-	float m_activeTime;
+	byte m_activeTime;
 	float m_readSpeed;
 	float m_writeSpeed;
 	float m_avgResponseTime;

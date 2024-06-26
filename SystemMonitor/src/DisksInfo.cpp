@@ -22,7 +22,7 @@ void DisksInfo::updateInfo()
 		disk.updateInfo();
 }
 
-std::vector<Disk> DisksInfo::allDisks() const
+const std::vector<Disk>& DisksInfo::allDisks() const
 {
-	return m_allDisks;;
+	return m_allDisks;
 }

@@ -44,7 +44,7 @@ int main(int argc, char** argv)
     std::shared_ptr<WMIManager> p_WMIManager(new WMIManager());
 
     CPUInfo cpuInfo;
-    MEMInfo memInfo;
+    MEMInfo memInfo(p_WMIManager);
     DisksInfo disksInfo(p_WMIManager);
 
     auto timer = new QTimer(centralWidget);
@@ -84,7 +84,7 @@ int main(int argc, char** argv)
             .arg(memInfo.speedMHz()));
         
         diskLabel->clear();
-        for (auto& disk : disksInfo.allDisks())
+        for (const auto& disk : disksInfo.allDisks())
         {
             diskLabel->setText(diskLabel->text().append(QString(
                 "DISK: %1\n"

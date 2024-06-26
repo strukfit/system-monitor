@@ -48,7 +48,7 @@ void WMIManager::execQuery(const std::wstring& query, const std::wstring& proper
 
         if (0 == uReturn)
             break;
-
+        
         VARIANT vtProp;
         hr = pclsObj->Get(property.c_str(), 0, &vtProp, nullptr, nullptr);
         if (FAILED(hr))

@@ -3,7 +3,7 @@
 Disk::Disk(const char diskLetter, std::shared_ptr<WMIManager> p_WMIManager) :
     m_diskLetter({ static_cast<wchar_t>(diskLetter), ':' }),
     m_diskModel(""),
-    m_activeTime(0.f),
+    m_activeTime(0),
     m_readSpeed(0.f),
     m_writeSpeed(0.f),
     m_avgResponseTime(0.f),
@@ -38,20 +38,20 @@ void Disk::updateActiveTime()
     std::wstring property = L"PercentDiskTime";
     std::vector<WMIValue> results; 
     m_WMIManager->execQuery(query, property, results);
-    for (auto& result : results)
-    {
-        std::visit([this](auto&& arg) {
-            using T = std::decay_t<decltype(arg)>;
-            if constexpr (
-                std::is_same_v<T, std::wstring>) 
-            {
-                m_activeTime = std::stof(arg);
-            }
-            else {
-                m_activeTime = arg;
-            }
-            }, result);
-    }
+    std::visit([this](auto&& arg) {
+        using T = std::decay_t<decltype(arg)>;
+        if constexpr (
+            std::is_same_v<T, std::wstring>)
+        {
+            m_activeTime = std::stoi(arg);
+        }
+        else {
+            m_activeTime = arg;
+        }
+        }, results[0]);
+
+    if (m_activeTime > 100)
+        m_activeTime = 100;
 }
 
 std::wstring Disk::diskLetter() const
@@ -59,7 +59,7 @@ std::wstring Disk::diskLetter() const
     return m_diskLetter;
 }
 
-float Disk::activeTime() const
+byte Disk::activeTime() const
 {
     return m_activeTime;
 }
