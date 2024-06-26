@@ -36,8 +36,8 @@ private:
 	void updateCPUCoreCount();
 	void updateCPUBaseSpeed();
 
-	PDH_HQUERY cpuQuery;
-	PDH_HCOUNTER cpuTotal, processCounter, threadCounter, handleCounter;
+	PDH_HQUERY m_hQuery;
+	PDH_HCOUNTER m_cpuTotal, m_processCounter, m_threadCounter, m_handleCounter;
 
 	double m_usage;
 

@@ -8,7 +8,7 @@
 class DisksInfo
 {
 public:
-	DisksInfo();
+	DisksInfo(std::shared_ptr<WMIManager> p_WMIManager);
 	~DisksInfo();
 
 	void updateInfo();

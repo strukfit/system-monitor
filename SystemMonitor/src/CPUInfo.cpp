@@ -15,7 +15,7 @@ CPUInfo::CPUInfo():
 
 CPUInfo::~CPUInfo()
 {
-    PdhCloseQuery(&cpuQuery);
+    PdhCloseQuery(&m_hQuery);
 }
 
 void CPUInfo::updateInfo()
@@ -62,23 +62,23 @@ DWORD CPUInfo::logicalProcessorCount() const
 
 void CPUInfo::pdhInit()
 {
-    PdhOpenQuery(NULL, NULL, &cpuQuery);
-    PdhAddEnglishCounter(cpuQuery, L"\\Processor(_Total)\\% Processor Time", NULL, &cpuTotal);
-    PdhAddEnglishCounter(cpuQuery, L"\\System\\Processes", NULL, &processCounter);
-    PdhAddEnglishCounter(cpuQuery, L"\\System\\Threads", NULL, &threadCounter);
-    PdhAddEnglishCounter(cpuQuery, L"\\Process(_Total)\\Handle Count", NULL, &handleCounter);
-    PdhCollectQueryData(cpuQuery);
+    PdhOpenQuery(NULL, NULL, &m_hQuery);
+    PdhAddEnglishCounter(m_hQuery, L"\\Processor(_Total)\\% Processor Time", NULL, &m_cpuTotal);
+    PdhAddEnglishCounter(m_hQuery, L"\\System\\Processes", NULL, &m_processCounter);
+    PdhAddEnglishCounter(m_hQuery, L"\\System\\Threads", NULL, &m_threadCounter);
+    PdhAddEnglishCounter(m_hQuery, L"\\Process(_Total)\\Handle Count", NULL, &m_handleCounter);
+    PdhCollectQueryData(m_hQuery);
 }
 
 void CPUInfo::updateCPUInfo()
 {
     PDH_FMT_COUNTERVALUE usageVal, processVal, threadVal, handleVal;
 
-    PdhCollectQueryData(cpuQuery);
-    PdhGetFormattedCounterValue(cpuTotal, PDH_FMT_DOUBLE, NULL, &usageVal);
-    PdhGetFormattedCounterValue(processCounter, PDH_FMT_LONG, NULL, &processVal);
-    PdhGetFormattedCounterValue(threadCounter, PDH_FMT_LONG, NULL, &threadVal);
-    PdhGetFormattedCounterValue(handleCounter, PDH_FMT_LONG, NULL, &handleVal);
+    PdhCollectQueryData(m_hQuery);
+    PdhGetFormattedCounterValue(m_cpuTotal, PDH_FMT_DOUBLE, NULL, &usageVal);
+    PdhGetFormattedCounterValue(m_processCounter, PDH_FMT_LONG, NULL, &processVal);
+    PdhGetFormattedCounterValue(m_threadCounter, PDH_FMT_LONG, NULL, &threadVal);
+    PdhGetFormattedCounterValue(m_handleCounter, PDH_FMT_LONG, NULL, &handleVal);
 
     m_usage = usageVal.doubleValue;
     m_processCount = processVal.longValue;

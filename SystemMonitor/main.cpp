@@ -7,6 +7,7 @@
 
 #ifdef _WIN32
 #include <windows.h>
+#include "WMIManager.h"
 //#else 
 //#include <sys/sysinfo.h>
 //#include <fstream>
@@ -40,10 +41,11 @@ int main(int argc, char** argv)
     diskLabel = new QLabel(NULL, centralWidget);
     layout->addWidget(diskLabel);
 
+    std::shared_ptr<WMIManager> p_WMIManager(new WMIManager());
+
     CPUInfo cpuInfo;
     MEMInfo memInfo;
-    
-    DisksInfo disksInfo;
+    DisksInfo disksInfo(p_WMIManager);
 
     auto timer = new QTimer(centralWidget);
     QObject::connect(timer, &QTimer::timeout, [&] {
@@ -86,9 +88,11 @@ int main(int argc, char** argv)
         {
             diskLabel->setText(diskLabel->text().append(QString(
                 "DISK: %1\n"
-                "DISK_USAGE: %2/%3\n"
-                "DISK_FREE_SPACE: %4\n\n")
+                "DISK_ACTIVE_TIME: %2\n"
+                "DISK_USAGE: %3/%4\n"
+                "DISK_FREE_SPACE: %5\n\n")
                 .arg(disk.diskLetter())
+                .arg(disk.activeTime())
                 .arg(disk.totalUsedBytes() / 1024.f / 1024.f / 1024.f)
                 .arg(disk.totalBytes() / 1024.f / 1024.f / 1024.f)
                 .arg(disk.totalFreeBytes() / 1024.f / 1024.f / 1024.f)));

@@ -2,23 +2,35 @@
 
 #ifdef _WIN32
 #include <windows.h>
+#include <pdh.h>
+#include <pdhmsg.h>
+#include <comdef.h>
+#include <Wbemidl.h>
+#include <memory>
+
+#include "WMIManager.h" 
+
+#pragma comment(lib, "wbemuuid.lib")
+#pragma comment(lib, "pdh.lib")
 //#else
 //#include <sys/sysinfo.h>
 //#include <fstream>
 #endif
 
 #include <string>
+#include <QMessageBox>
 
 class Disk
 {
 public:
-	Disk(const char diskLetter);
+	Disk(const char diskLetter, std::shared_ptr<WMIManager> p_WMIManager);
 	~Disk();
 
 	void updateInfo();
 
-	char diskLetter() const;
-	byte activeTime() const;
+	std::wstring diskLetter() const;
+
+	float activeTime() const;
 	float readSpeed() const;
 	float writeSpeed() const;
 	float avgResponseTime() const;
@@ -28,10 +40,17 @@ public:
 	ULONGLONG totalFreeBytes() const;
 
 private:
-	const char m_diskLetter;
+	void updateActiveTime();
 
-	byte m_activeTime;
+	std::shared_ptr<WMIManager> m_WMIManager;
 
+	PDH_HQUERY m_hQuery;
+	PDH_HCOUNTER m_activeTimeCounter;
+
+	const std::wstring m_diskLetter;
+	const std::string m_diskModel;
+
+	float m_activeTime;
 	float m_readSpeed;
 	float m_writeSpeed;
 	float m_avgResponseTime;
