@@ -1,9 +1,21 @@
 #include "WMIManager.h"
 
 #ifdef _WIN32
-WMIManager::WMIManager():
-    m_pLoc(nullptr),
-    m_pSvc(nullptr)
+
+thread_local IWbemLocator* WMIManager::m_pLoc = nullptr;
+thread_local IWbemServices* WMIManager::m_pSvc = nullptr;
+
+WMIManager::WMIManager()
+{
+}
+
+WMIManager::~WMIManager()
+{
+    if(m_pSvc) m_pSvc->Release();
+    if(m_pLoc) m_pLoc->Release();
+}
+
+void WMIManager::initWMI()
 {
     HRESULT hr;
 
@@ -18,14 +30,10 @@ WMIManager::WMIManager():
     if (FAILED(hr)) return;
 }
 
-WMIManager::~WMIManager()
-{
-    if(m_pSvc) m_pSvc->Release();
-    if(m_pLoc) m_pLoc->Release();
-}
-
 void WMIManager::execQuery(const std::wstring& query, const std::wstring& property, std::vector<WMIValue>& results)
 {
+    initWMI();
+
     HRESULT hr;
 
     IEnumWbemClassObject* pEnumerator = nullptr;

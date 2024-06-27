@@ -1,6 +1,6 @@
 #include "Disk.h"
 
-Disk::Disk(const char diskLetter, std::shared_ptr<WMIManager> p_WMIManager) :
+Disk::Disk(const char diskLetter) :
     m_diskLetter({ static_cast<wchar_t>(diskLetter), ':' }),
     m_diskModel(""),
     m_activeTime(0),
@@ -9,35 +9,34 @@ Disk::Disk(const char diskLetter, std::shared_ptr<WMIManager> p_WMIManager) :
     m_avgResponseTime(0.f),
     m_totalUsedBytes(0),
     m_totalBytes(0),
-    m_totalFreeBytes(0),
-    m_WMIManager(p_WMIManager)
+    m_totalFreeBytes(0)
 {
-	updateInfo();
+	//updateInfo();
 }
 
 Disk::~Disk() 
 {
-	PdhCloseQuery(m_hQuery);
 }
 
 void Disk::updateInfo()
 {
-	ULARGE_INTEGER freeBytesAvailable, totalNumberOfBytes, totalNumberOfFreeBytes;
-	GetDiskFreeSpaceEx(m_diskLetter.c_str(), &freeBytesAvailable, &totalNumberOfBytes, &totalNumberOfFreeBytes);
+    ULARGE_INTEGER freeBytesAvailable, totalNumberOfBytes, totalNumberOfFreeBytes;
+    GetDiskFreeSpaceEx(m_diskLetter.c_str(), &freeBytesAvailable, &totalNumberOfBytes, &totalNumberOfFreeBytes);
 
-	m_totalBytes = totalNumberOfBytes.QuadPart;
-	m_totalFreeBytes = totalNumberOfFreeBytes.QuadPart;
-	m_totalUsedBytes = m_totalBytes - m_totalFreeBytes;
+    m_totalBytes = totalNumberOfBytes.QuadPart;
+    m_totalFreeBytes = totalNumberOfFreeBytes.QuadPart;
+    m_totalUsedBytes = m_totalBytes - m_totalFreeBytes;
 
-	updateActiveTime();
+    updateActiveTime();
 }
 
 void Disk::updateActiveTime()
 {
     std::wstring query = L"SELECT * FROM Win32_PerfFormattedData_PerfDisk_LogicalDisk WHERE Name = \'" + m_diskLetter + L"\'";
     std::wstring property = L"PercentDiskTime";
-    std::vector<WMIValue> results; 
-    m_WMIManager->execQuery(query, property, results);
+    std::vector<WMIValue> results;
+
+    WMIManager::execQuery(query, property, results);
     std::visit([this](auto&& arg) {
         using T = std::decay_t<decltype(arg)>;
         if constexpr (

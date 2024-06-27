@@ -7,6 +7,7 @@
 #include <comdef.h>
 #include <Wbemidl.h>
 #include <memory>
+#include <future>
 
 #include "WMIManager.h" 
 
@@ -23,7 +24,7 @@
 class Disk
 {
 public:
-	Disk(const char diskLetter, std::shared_ptr<WMIManager> p_WMIManager);
+	Disk(const char diskLetter);
 	~Disk();
 
 	void updateInfo();
@@ -42,10 +43,8 @@ public:
 private:
 	void updateActiveTime();
 
-	std::shared_ptr<WMIManager> m_WMIManager;
-
-	PDH_HQUERY m_hQuery;
-	PDH_HCOUNTER m_activeTimeCounter;
+	IWbemLocator* m_pLoc;
+	IWbemServices* m_pSvc;
 
 	const std::wstring m_diskLetter;
 	const std::string m_diskModel;

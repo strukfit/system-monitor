@@ -1,13 +1,12 @@
 #include "MEMInfo.h"
 
-MEMInfo::MEMInfo(std::shared_ptr<WMIManager> p_WMIManager) :
+MEMInfo::MEMInfo() :
     m_totalGB(0.f),
     m_availGB(0.f),
     m_usedGB(0.f),
     m_availPageFileGB(0.f),
     m_totalPageFileGB(0.f),
-    m_usedPageFileGB(0.f),
-    m_WMIManager(p_WMIManager)
+    m_usedPageFileGB(0.f)
 {
     updateInfo();
     updateSpeedInfo();
@@ -37,7 +36,7 @@ void MEMInfo::updateSpeedInfo()
     std::wstring query = L"SELECT * FROM Win32_PhysicalMemory";
     std::wstring property = L"Speed";
     std::vector<WMIValue> results;
-    m_WMIManager->execQuery(query, property, results);
+    WMIManager::execQuery(query, property, results);
 
     UINT speed = 0;
     for (const auto& result : results) {

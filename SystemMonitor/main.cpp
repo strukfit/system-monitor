@@ -41,11 +41,11 @@ int main(int argc, char** argv)
     diskLabel = new QLabel(NULL, centralWidget);
     layout->addWidget(diskLabel);
 
-    std::shared_ptr<WMIManager> p_WMIManager(new WMIManager());
+    WMIManager wmiManager;
 
     CPUInfo cpuInfo;
-    MEMInfo memInfo(p_WMIManager);
-    DisksInfo disksInfo(p_WMIManager);
+    MEMInfo memInfo;
+    DisksInfo disksInfo;
 
     auto timer = new QTimer(centralWidget);
     QObject::connect(timer, &QTimer::timeout, [&] {

@@ -16,7 +16,7 @@
 class MEMInfo
 {
 public:
-	MEMInfo(std::shared_ptr<WMIManager> p_WMIManager);
+	MEMInfo();
 	~MEMInfo();
 
 	void updateInfo();
@@ -31,8 +31,6 @@ public:
 
 private:
 	void updateSpeedInfo();
-
-	std::shared_ptr<WMIManager> m_WMIManager;
 
 	float m_totalGB;
 	float m_availGB;
