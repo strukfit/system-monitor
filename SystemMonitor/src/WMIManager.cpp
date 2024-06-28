@@ -2,38 +2,13 @@
 
 #ifdef _WIN32
 
-//IWbemServices* WMIManager::m_pSvc{ nullptr };
-//IStream* WMIManager::m_pSvcStream{ nullptr };
-//std::mutex WMIManager::m_mutex;
-
 WMIManager::WMIManager()
 {
 }
 
 WMIManager::~WMIManager()
 {
-    //if(m_pSvc) m_pSvc->Release();
-    //if(m_pSvcStream) m_pSvcStream->Release();
 }
-
-//void WMIManager::servicesInit()
-//{
-//    HRESULT hr;
-//
-//    IWbemLocator* pLoc = nullptr;
-//
-//    hr = CoCreateInstance(CLSID_WbemLocator, 0, CLSCTX_INPROC_SERVER, IID_IWbemLocator, reinterpret_cast<void**>(&pLoc));
-//    if (FAILED(hr)) return;
-//
-//    hr = pLoc->ConnectServer(_bstr_t(L"ROOT\\CIMV2"), nullptr, nullptr, nullptr, 0, nullptr, nullptr, &m_pSvc);
-//    if (FAILED(hr)) return;
-//
-//    hr = CoSetProxyBlanket(m_pSvc, RPC_C_AUTHN_WINNT, RPC_C_AUTHZ_NONE, nullptr,
-//        RPC_C_AUTHN_LEVEL_CALL, RPC_C_IMP_LEVEL_IMPERSONATE, nullptr, EOAC_NONE);
-//    if (FAILED(hr)) return;
-//
-//    pLoc->Release();
-//}
 
 void WMIManager::execQuery(const std::wstring& query, const std::wstring& property, std::vector<WMIValue>& results)
 {

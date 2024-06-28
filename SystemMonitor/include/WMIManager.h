@@ -25,12 +25,5 @@ public:
 	~WMIManager();
 	
 	static void execQuery(const std::wstring& query, const std::wstring& property, std::vector<WMIValue>& results);
-
-private:	
-	//static void servicesInit();
-
-	//static IWbemServices* m_pSvc;
-	//static IStream* m_pSvcStream;
-	//static std::mutex m_mutex;
 };
 #endif
