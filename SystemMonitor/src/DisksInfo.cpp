@@ -8,7 +8,7 @@ DisksInfo::DisksInfo()
 	{
 		// If the bit is set, the disk exists
 		if (drivesMask & 1)
-			m_allDisks.push_back(Disk(letter));
+			m_allDisks.push_back(std::make_unique<Disk>(letter));
 		drivesMask >>= 1;
 	}
 	updateInfo();
@@ -19,11 +19,10 @@ DisksInfo::~DisksInfo() {}
 void DisksInfo::updateInfo()
 {
     std::vector<std::future<void>> futures;
-
     for (auto& disk : m_allDisks)
     {
         futures.emplace_back(std::async(std::launch::async, [&disk]() {
-			disk.updateInfo();
+			disk->updateInfo();
 		}));
     }
 
@@ -31,7 +30,7 @@ void DisksInfo::updateInfo()
 		future.get();
 }
 
-const std::vector<Disk>& DisksInfo::allDisks() const
+const std::vector<std::unique_ptr<Disk>>& DisksInfo::allDisks() const
 {
 	return m_allDisks;
 }

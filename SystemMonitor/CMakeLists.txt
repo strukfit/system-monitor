@@ -27,10 +27,10 @@ file(GLOB_RECURSE SOURCES "src/*.cpp"  "include/*.h" "main.cpp")
 qt_add_executable(${CMAKE_PROJECT_NAME}  ${SOURCES})
 # exe
 
-set_target_properties(${CMAKE_PROJECT_NAME}
-    PROPERTIES
-        WIN32_EXECUTABLE TRUE
-)
+#set_target_properties(${CMAKE_PROJECT_NAME}
+#    PROPERTIES
+#        WIN32_EXECUTABLE TRUE
+#)
 
 
 target_link_libraries(${CMAKE_PROJECT_NAME}

@@ -2,8 +2,9 @@
 
 #ifdef _WIN32
 
-thread_local IWbemLocator* WMIManager::m_pLoc = nullptr;
-thread_local IWbemServices* WMIManager::m_pSvc = nullptr;
+//IWbemServices* WMIManager::m_pSvc{ nullptr };
+//IStream* WMIManager::m_pSvcStream{ nullptr };
+//std::mutex WMIManager::m_mutex;
 
 WMIManager::WMIManager()
 {
@@ -11,40 +12,65 @@ WMIManager::WMIManager()
 
 WMIManager::~WMIManager()
 {
-    if(m_pSvc) m_pSvc->Release();
-    if(m_pLoc) m_pLoc->Release();
+    //if(m_pSvc) m_pSvc->Release();
+    //if(m_pSvcStream) m_pSvcStream->Release();
 }
 
-void WMIManager::initWMI()
-{
-    HRESULT hr;
-
-    hr = CoCreateInstance(CLSID_WbemLocator, 0, CLSCTX_INPROC_SERVER, IID_IWbemLocator, reinterpret_cast<void**>(&m_pLoc));
-    if (FAILED(hr)) return;
-
-    hr = m_pLoc->ConnectServer(_bstr_t(L"ROOT\\CIMV2"), nullptr, nullptr, nullptr, 0, nullptr, nullptr, &m_pSvc);
-    if (FAILED(hr)) return;
-
-    hr = CoSetProxyBlanket(m_pSvc, RPC_C_AUTHN_WINNT, RPC_C_AUTHZ_NONE, nullptr,
-        RPC_C_AUTHN_LEVEL_CALL, RPC_C_IMP_LEVEL_IMPERSONATE, nullptr, EOAC_NONE);
-    if (FAILED(hr)) return;
-}
+//void WMIManager::servicesInit()
+//{
+//    HRESULT hr;
+//
+//    IWbemLocator* pLoc = nullptr;
+//
+//    hr = CoCreateInstance(CLSID_WbemLocator, 0, CLSCTX_INPROC_SERVER, IID_IWbemLocator, reinterpret_cast<void**>(&pLoc));
+//    if (FAILED(hr)) return;
+//
+//    hr = pLoc->ConnectServer(_bstr_t(L"ROOT\\CIMV2"), nullptr, nullptr, nullptr, 0, nullptr, nullptr, &m_pSvc);
+//    if (FAILED(hr)) return;
+//
+//    hr = CoSetProxyBlanket(m_pSvc, RPC_C_AUTHN_WINNT, RPC_C_AUTHZ_NONE, nullptr,
+//        RPC_C_AUTHN_LEVEL_CALL, RPC_C_IMP_LEVEL_IMPERSONATE, nullptr, EOAC_NONE);
+//    if (FAILED(hr)) return;
+//
+//    pLoc->Release();
+//}
 
 void WMIManager::execQuery(const std::wstring& query, const std::wstring& property, std::vector<WMIValue>& results)
 {
-    initWMI();
-
     HRESULT hr;
 
+    IWbemLocator* pLoc = nullptr;
+    IWbemServices* pSvc = nullptr;
+
+    hr = CoCreateInstance(CLSID_WbemLocator, 0, CLSCTX_INPROC_SERVER, IID_IWbemLocator, reinterpret_cast<void**>(&pLoc));
+    if (FAILED(hr)) return;
+
+    hr = pLoc->ConnectServer(_bstr_t(L"ROOT\\CIMV2"), nullptr, nullptr, nullptr, 0, nullptr, nullptr, &pSvc);
+    if (FAILED(hr)) return;
+
+    hr = CoSetProxyBlanket(pSvc, RPC_C_AUTHN_WINNT, RPC_C_AUTHZ_NONE, nullptr,
+        RPC_C_AUTHN_LEVEL_CALL, RPC_C_IMP_LEVEL_IMPERSONATE, nullptr, EOAC_NONE);
+    if (FAILED(hr)) 
+    {
+        pSvc->Release();
+        return;
+    }
+
+    pLoc->Release();
+     
     IEnumWbemClassObject* pEnumerator = nullptr;
-    hr = m_pSvc->ExecQuery(
+    hr = pSvc->ExecQuery(
         bstr_t("WQL"),
         bstr_t(query.c_str()),
         WBEM_FLAG_FORWARD_ONLY | WBEM_FLAG_RETURN_IMMEDIATELY,
         nullptr,
         &pEnumerator);
 
-    if (FAILED(hr)) return;
+    if (FAILED(hr))
+    {
+        pSvc->Release();
+        return;
+    }
 
     // Iterate over results
     IWbemClassObject* pclsObj = nullptr;
@@ -61,7 +87,7 @@ void WMIManager::execQuery(const std::wstring& query, const std::wstring& proper
         hr = pclsObj->Get(property.c_str(), 0, &vtProp, nullptr, nullptr);
         if (FAILED(hr))
         {
-            pclsObj->Release();
+            pSvc->Release();
             return;
         }
 
@@ -87,11 +113,12 @@ void WMIManager::execQuery(const std::wstring& query, const std::wstring& proper
         results.push_back(value);
 
         VariantClear(&vtProp);
-        pclsObj->Release();
     }
 
     // Cleanup
-    pEnumerator->Release();
+    if(pEnumerator) pEnumerator->Release();
+    if(pclsObj) pclsObj->Release();
+    if(pSvc) pSvc->Release();
 }
 
 #endif

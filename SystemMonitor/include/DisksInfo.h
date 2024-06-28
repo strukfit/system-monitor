@@ -7,7 +7,6 @@
 #include <mutex>
 #include "Disk.h"
 
-
 class DisksInfo
 {
 public:
@@ -15,8 +14,8 @@ public:
 	~DisksInfo();
 
 	void updateInfo();
-	const std::vector<Disk>& allDisks() const;
+	const std::vector<std::unique_ptr<Disk>>& allDisks() const;
 	
 private:
-	std::vector<Disk> m_allDisks;
+	std::vector<std::unique_ptr<Disk>> m_allDisks;
 };

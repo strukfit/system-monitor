@@ -22,6 +22,29 @@ QLabel* cpuLabel;
 QLabel* memLabel;
 QLabel* diskLabel;
 
+void updateDisksAsync(DisksInfo& disksInfo, QLabel* diskLabel)
+{
+    disksInfo.updateInfo();
+    QString labelText;
+    for (const auto& disk : disksInfo.allDisks())
+    {
+        QString diskText = QString(
+            "DISK: %1\n"
+            "DISK_ACTIVE_TIME: %2\n"
+            "DISK_USAGE: %3/%4\n"
+            "DISK_FREE_SPACE: %5\n\n")
+            .arg(disk->diskLetter())
+            .arg(disk->activeTime())
+            .arg(disk->totalUsedBytes() / 1024.f / 1024.f / 1024.f)
+            .arg(disk->totalBytes() / 1024.f / 1024.f / 1024.f)
+            .arg(disk->totalFreeBytes() / 1024.f / 1024.f / 1024.f);
+
+        labelText.append(diskText);
+    }
+
+    QMetaObject::invokeMethod(diskLabel, "setText", Qt::QueuedConnection, Q_ARG(QString, labelText));
+}
+
 int main(int argc, char** argv)
 {
     QApplication app(argc, argv);
@@ -51,7 +74,6 @@ int main(int argc, char** argv)
     QObject::connect(timer, &QTimer::timeout, [&] {
         cpuInfo.updateInfo();
         memInfo.updateInfo();
-        disksInfo.updateInfo();
 
         cpuLabel->setText(QString(
             "CPU_USAGE: %1\n"
@@ -82,21 +104,9 @@ int main(int argc, char** argv)
             .arg(memInfo.totalPageFileGB())
             .arg(memInfo.availPageFileGB())
             .arg(memInfo.speedMHz()));
-        
-        diskLabel->clear();
-        for (const auto& disk : disksInfo.allDisks())
-        {
-            diskLabel->setText(diskLabel->text().append(QString(
-                "DISK: %1\n"
-                "DISK_ACTIVE_TIME: %2\n"
-                "DISK_USAGE: %3/%4\n"
-                "DISK_FREE_SPACE: %5\n\n")
-                .arg(disk.diskLetter())
-                .arg(disk.activeTime())
-                .arg(disk.totalUsedBytes() / 1024.f / 1024.f / 1024.f)
-                .arg(disk.totalBytes() / 1024.f / 1024.f / 1024.f)
-                .arg(disk.totalFreeBytes() / 1024.f / 1024.f / 1024.f)));
-        }
+
+        std::thread updateDisksThread(updateDisksAsync, std::ref(disksInfo), diskLabel);
+        updateDisksThread.detach();
     });
     timer->start(1000);
 

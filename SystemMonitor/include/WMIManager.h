@@ -7,6 +7,11 @@
 #include <vector>
 #include <variant>
 #include <string>
+#include <atomic>
+#include <mutex>
+#include <iostream>
+
+#include <QObject>
 
 #pragma comment(lib, "wbemuuid.lib")
 
@@ -21,11 +26,11 @@ public:
 	
 	static void execQuery(const std::wstring& query, const std::wstring& property, std::vector<WMIValue>& results);
 
-private:
-	static void initWMI();
+private:	
+	//static void servicesInit();
 
-	static thread_local IWbemLocator* m_pLoc;
-	static thread_local IWbemServices* m_pSvc;
-
+	//static IWbemServices* m_pSvc;
+	//static IStream* m_pSvcStream;
+	//static std::mutex m_mutex;
 };
 #endif

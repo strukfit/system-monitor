@@ -26,7 +26,7 @@ void Disk::updateInfo()
     m_totalBytes = totalNumberOfBytes.QuadPart;
     m_totalFreeBytes = totalNumberOfFreeBytes.QuadPart;
     m_totalUsedBytes = m_totalBytes - m_totalFreeBytes;
-
+   
     updateActiveTime();
 }
 
@@ -35,19 +35,29 @@ void Disk::updateActiveTime()
     std::wstring query = L"SELECT * FROM Win32_PerfFormattedData_PerfDisk_LogicalDisk WHERE Name = \'" + m_diskLetter + L"\'";
     std::wstring property = L"PercentDiskTime";
     std::vector<WMIValue> results;
-
+    
     WMIManager::execQuery(query, property, results);
-    std::visit([this](auto&& arg) {
-        using T = std::decay_t<decltype(arg)>;
-        if constexpr (
-            std::is_same_v<T, std::wstring>)
-        {
-            m_activeTime = std::stoi(arg);
-        }
-        else {
-            m_activeTime = arg;
-        }
-        }, results[0]);
+
+    if (results.empty())
+    {
+        std::cout << "results is empty" << std::endl;
+        m_activeTime = 0;
+        return;
+    }
+
+    for (const auto& result : results)
+    {
+        std::visit([this](auto&& arg) {
+            using T = std::decay_t<decltype(arg)>;
+            if constexpr (std::is_same_v<T, std::wstring>)
+            {
+                m_activeTime = std::stoi(arg);
+            }
+            else {
+                m_activeTime = arg;
+            }
+        }, result);
+    }
 
     if (m_activeTime > 100)
         m_activeTime = 100;

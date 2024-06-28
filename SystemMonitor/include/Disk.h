@@ -19,7 +19,8 @@
 #endif
 
 #include <string>
-#include <QMessageBox>
+#include <QObject>
+#include <iostream>
 
 class Disk
 {
@@ -42,9 +43,6 @@ public:
 
 private:
 	void updateActiveTime();
-
-	IWbemLocator* m_pLoc;
-	IWbemServices* m_pSvc;
 
 	const std::wstring m_diskLetter;
 	const std::string m_diskModel;
