@@ -17,7 +17,6 @@
 #include "MEMInfo.h"
 #include "DisksInfo.h"
 
-
 QLabel* cpuLabel;
 QLabel* memLabel;
 QLabel* diskLabel;
@@ -30,19 +29,70 @@ void updateDisksAsync(DisksInfo& disksInfo, QLabel* diskLabel)
     {
         QString diskText = QString(
             "DISK: %1\n"
-            "DISK_ACTIVE_TIME: %2\n"
-            "DISK_USAGE: %3/%4\n"
-            "DISK_FREE_SPACE: %5\n\n")
+            "DISK_ACTIVE_TIME: %2 %\n"
+            "DISK_USAGE: %3/%4 Gb\n"
+            "DISK_FREE_SPACE: %5 Gb\n"
+            "DISK_READ_SPEED: %6 Mb/s\n"
+            "DISK_WRITE_SPEED: %7 Mb/s\n"
+            "DISK_AVG_RESPONSE_TIME: %8 ms\n\n")
             .arg(disk->diskLetter())
             .arg(disk->activeTime())
             .arg(disk->totalUsedBytes() / 1024.f / 1024.f / 1024.f)
             .arg(disk->totalBytes() / 1024.f / 1024.f / 1024.f)
-            .arg(disk->totalFreeBytes() / 1024.f / 1024.f / 1024.f);
+            .arg(disk->totalFreeBytes() / 1024.f / 1024.f / 1024.f)
+            .arg(disk->readSpeed() / 1024.f / 1024.f)
+            .arg(disk->writeSpeed() / 1024.f / 1024.f)
+            .arg(disk->avgResponseTime() * 1000.f);
 
         labelText.append(diskText);
     }
 
     QMetaObject::invokeMethod(diskLabel, "setText", Qt::QueuedConnection, Q_ARG(QString, labelText));
+}
+
+WMIManager wmiManager;
+
+CPUInfo cpuInfo;
+MEMInfo memInfo;
+DisksInfo disksInfo;
+
+Q_SLOT void updateLabels()
+{
+    cpuInfo.updateInfo();
+    memInfo.updateInfo();
+
+    cpuLabel->setText(QString(
+        "CPU_USAGE: %1\n"
+        "CPU_PROCESSES: %2\n"
+        "CPU_THREADS: %3\n"
+        "CPU_HANDLES: %4\n"
+        "CPU_BASE_SPEED: %5 GHz\n"
+        "CPU_CORES: %6\n"
+        "CPU_LOGIC_PROC: %7\n")
+        .arg(cpuInfo.usage())
+        .arg(cpuInfo.processCount())
+        .arg(cpuInfo.threadCount())
+        .arg(cpuInfo.handleCount())
+        .arg(cpuInfo.baseSpeed())
+        .arg(cpuInfo.coreCount())
+        .arg(cpuInfo.logicalProcessorCount()));
+
+    memLabel->setText(QString(
+        "MEM: %1/%2 GB\n"
+        "MEM_AVAIL: %3\n"
+        "MEM_PAGE_FILE: %4/%5 GB\n"
+        "MEM_PAGE_FILE_AVAIL: %6\n"
+        "MEM_SPEED: %7 MHz")
+        .arg(memInfo.usedGB())
+        .arg(memInfo.totalGB())
+        .arg(memInfo.availGB())
+        .arg(memInfo.usedPageFileGB())
+        .arg(memInfo.totalPageFileGB())
+        .arg(memInfo.availPageFileGB())
+        .arg(memInfo.speedMHz()));
+
+    std::thread updateDisksThread(updateDisksAsync, std::ref(disksInfo), diskLabel);
+    updateDisksThread.detach();
 }
 
 int main(int argc, char** argv)
@@ -64,50 +114,10 @@ int main(int argc, char** argv)
     diskLabel = new QLabel(NULL, centralWidget);
     layout->addWidget(diskLabel);
 
-    WMIManager wmiManager;
-
-    CPUInfo cpuInfo;
-    MEMInfo memInfo;
-    DisksInfo disksInfo;
+    updateLabels();
 
     auto timer = new QTimer(centralWidget);
-    QObject::connect(timer, &QTimer::timeout, [&] {
-        cpuInfo.updateInfo();
-        memInfo.updateInfo();
-
-        cpuLabel->setText(QString(
-            "CPU_USAGE: %1\n"
-            "CPU_PROCESSES: %2\n"
-            "CPU_THREADS: %3\n"
-            "CPU_HANDLES: %4\n"
-            "CPU_BASE_SPEED: %5 GHz\n"
-            "CPU_CORES: %6\n"
-            "CPU_LOGIC_PROC: %7\n")
-                .arg(cpuInfo.usage())
-                .arg(cpuInfo.processCount())
-                .arg(cpuInfo.threadCount())
-                .arg(cpuInfo.handleCount())
-                .arg(cpuInfo.baseSpeed())
-                .arg(cpuInfo.coreCount())
-                .arg(cpuInfo.logicalProcessorCount()));
-
-        memLabel->setText(QString(
-            "MEM: %1/%2 GB\n"
-            "MEM_AVAIL: %3\n"
-            "MEM_PAGE_FILE: %4/%5 GB\n"
-            "MEM_PAGE_FILE_AVAIL: %6\n"
-            "MEM_SPEED: %7 MHz")
-            .arg(memInfo.usedGB())
-            .arg(memInfo.totalGB())
-            .arg(memInfo.availGB())
-            .arg(memInfo.usedPageFileGB())
-            .arg(memInfo.totalPageFileGB())
-            .arg(memInfo.availPageFileGB())
-            .arg(memInfo.speedMHz()));
-
-        std::thread updateDisksThread(updateDisksAsync, std::ref(disksInfo), diskLabel);
-        updateDisksThread.detach();
-    });
+    QObject::connect(timer, &QTimer::timeout, &updateLabels);
     timer->start(1000);
 
     window->setCentralWidget(centralWidget);

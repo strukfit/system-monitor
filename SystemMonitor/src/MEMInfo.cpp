@@ -8,7 +8,9 @@ MEMInfo::MEMInfo() :
     m_totalPageFileGB(0.f),
     m_usedPageFileGB(0.f)
 {
-    updateInfo();
+    //updateInfo();
+
+    // Update constant info
     updateSpeedInfo();
 }
 
@@ -45,7 +47,7 @@ void MEMInfo::updateSpeedInfo()
             if constexpr (std::is_same_v<T, int> || std::is_same_v<T, long long>) {
                 if (arg > speed) speed = arg;
             }
-            }, result);
+        }, result);
     }
     m_speedMHz = speed;
 }

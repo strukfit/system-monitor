@@ -33,24 +33,28 @@ public:
 	std::wstring diskLetter() const;
 
 	byte activeTime() const;
-	float readSpeed() const;
-	float writeSpeed() const;
-	float avgResponseTime() const;
+	LONG readSpeed() const;
+	LONG writeSpeed() const;
+	double avgResponseTime() const;
 
 	ULONGLONG totalUsedBytes() const;
 	ULONGLONG totalBytes() const;
 	ULONGLONG totalFreeBytes() const;
 
 private:
+	void pdhInit();
 	void updateActiveTime();
+
+	PDH_HQUERY m_hQuery;
+	PDH_HCOUNTER m_readCounter, m_writeCounter, m_responseTimeCounter;
 
 	const std::wstring m_diskLetter;
 	const std::string m_diskModel;
 
 	byte m_activeTime;
-	float m_readSpeed;
-	float m_writeSpeed;
-	float m_avgResponseTime;
+	LONG m_readSpeed;
+	LONG m_writeSpeed;
+	double m_avgResponseTime;
 
 	ULONGLONG m_totalUsedBytes;
 	ULONGLONG m_totalBytes;

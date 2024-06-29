@@ -10,7 +10,7 @@ CPUInfo::CPUInfo():
     m_logicalProcessorCount(0)
 {
     pdhInit();
-    updateInfo();
+    //updateInfo();
 }
 
 CPUInfo::~CPUInfo()

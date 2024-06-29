@@ -12,10 +12,20 @@ Disk::Disk(const char diskLetter) :
     m_totalFreeBytes(0)
 {
 	//updateInfo();
+    pdhInit();
 }
 
 Disk::~Disk() 
 {
+}
+
+void Disk::pdhInit()
+{
+    PdhOpenQuery(NULL, NULL, &m_hQuery);
+    PdhAddEnglishCounter(m_hQuery, (L"\\LogicalDisk(" + m_diskLetter + L")\\Disk Read Bytes/sec").c_str(), NULL, &m_readCounter);
+    PdhAddEnglishCounter(m_hQuery, (L"\\LogicalDisk(" + m_diskLetter + L")\\Disk Write Bytes/sec").c_str(), NULL, &m_writeCounter);
+    PdhAddEnglishCounter(m_hQuery, (L"\\LogicalDisk(" + m_diskLetter + L")\\Avg. Disk sec/Transfer").c_str(), NULL, &m_responseTimeCounter);
+    PdhCollectQueryData(m_hQuery);
 }
 
 void Disk::updateInfo()
@@ -26,7 +36,18 @@ void Disk::updateInfo()
     m_totalBytes = totalNumberOfBytes.QuadPart;
     m_totalFreeBytes = totalNumberOfFreeBytes.QuadPart;
     m_totalUsedBytes = m_totalBytes - m_totalFreeBytes;
-   
+
+    PDH_FMT_COUNTERVALUE readSpeedVal, writeSpeedVal, avgResponseTimeVal;
+
+    PdhCollectQueryData(m_hQuery);
+    PdhGetFormattedCounterValue(m_readCounter, PDH_FMT_LONG, NULL, &readSpeedVal);
+    PdhGetFormattedCounterValue(m_writeCounter, PDH_FMT_LONG, NULL, &writeSpeedVal);
+    PdhGetFormattedCounterValue(m_responseTimeCounter, PDH_FMT_DOUBLE, NULL, &avgResponseTimeVal);
+
+    m_readSpeed = readSpeedVal.longValue;
+    m_writeSpeed = writeSpeedVal.longValue;
+    m_avgResponseTime = avgResponseTimeVal.doubleValue;
+
     updateActiveTime();
 }
 
@@ -40,7 +61,6 @@ void Disk::updateActiveTime()
 
     if (results.empty())
     {
-        std::cout << "results is empty" << std::endl;
         m_activeTime = 0;
         return;
     }
@@ -73,17 +93,17 @@ byte Disk::activeTime() const
     return m_activeTime;
 }
 
-float Disk::readSpeed() const
+LONG Disk::readSpeed() const
 {
     return m_readSpeed;
 }
 
-float Disk::writeSpeed() const
+LONG Disk::writeSpeed() const
 {
     return m_writeSpeed;
 }
 
-float Disk::avgResponseTime() const
+double Disk::avgResponseTime() const
 {
     return m_avgResponseTime;
 }
