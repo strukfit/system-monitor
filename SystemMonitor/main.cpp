@@ -62,13 +62,15 @@ Q_SLOT void updateLabels()
     memInfo.updateInfo();
 
     cpuLabel->setText(QString(
-        "CPU_USAGE: %1\n"
-        "CPU_PROCESSES: %2\n"
-        "CPU_THREADS: %3\n"
-        "CPU_HANDLES: %4\n"
-        "CPU_BASE_SPEED: %5 GHz\n"
-        "CPU_CORES: %6\n"
-        "CPU_LOGIC_PROC: %7\n")
+        "CPU_NAME: %1\n"
+        "CPU_USAGE: %2\n"
+        "CPU_PROCESSES: %3\n"
+        "CPU_THREADS: %4\n"
+        "CPU_HANDLES: %5\n"
+        "CPU_BASE_SPEED: %6 GHz\n"
+        "CPU_CORES: %7\n"
+        "CPU_LOGIC_PROC: %8\n")
+        .arg(cpuInfo.modelName())
         .arg(cpuInfo.usage())
         .arg(cpuInfo.processCount())
         .arg(cpuInfo.threadCount())

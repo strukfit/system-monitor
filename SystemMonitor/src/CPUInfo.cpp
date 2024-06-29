@@ -10,7 +10,11 @@ CPUInfo::CPUInfo():
     m_logicalProcessorCount(0)
 {
     pdhInit();
-    //updateInfo();
+
+    // Update constant variables
+    updateCPUCoreCount();
+    updateCPUBaseSpeed();
+    updateCPUModelName();
 }
 
 CPUInfo::~CPUInfo()
@@ -20,44 +24,8 @@ CPUInfo::~CPUInfo()
 
 void CPUInfo::updateInfo()
 {
+    // Update inconstant variables
     updateCPUInfo();
-    updateCPUCoreCount();
-    updateCPUBaseSpeed();
-}
-
-double CPUInfo::usage() const
-{
-    return m_usage;
-}
-
-LONG CPUInfo::processCount() const
-{
-    return m_processCount;
-}
-
-LONG CPUInfo::threadCount() const
-{
-    return m_threadCount;
-}
-
-LONG CPUInfo::handleCount() const
-{
-    return m_handleCount;
-}
-
-DWORD CPUInfo::baseSpeed() const
-{
-    return m_baseSpeed;
-}
-
-DWORD CPUInfo::coreCount() const
-{
-    return m_coreCount;
-}
-
-DWORD CPUInfo::logicalProcessorCount() const
-{
-    return m_logicalProcessorCount;
 }
 
 void CPUInfo::pdhInit()
@@ -126,4 +94,70 @@ void CPUInfo::updateCPUBaseSpeed() {
         RegCloseKey(hKey);
     }
     m_baseSpeed = mhz / 1000.f;
+}
+
+void CPUInfo::updateCPUModelName()
+{
+    std::wstring query = L"SELECT Name FROM Win32_Processor";
+    std::wstring property = L"Name";
+    std::vector<WMIValue> results;
+
+    WMIManager::execQuery(query, property, results);
+
+    if (results.empty())
+    {
+        m_modelName = L"";
+        return;
+    }
+
+    for (const auto& result : results)
+    {
+        std::visit([this](auto&& arg) {
+            using T = std::decay_t<decltype(arg)>;
+            if constexpr (std::is_same_v<T, std::wstring>)
+            {
+                m_modelName = arg;
+            }
+        }, result);
+    }
+}
+
+std::wstring CPUInfo::modelName() const
+{
+    return m_modelName;
+}
+
+double CPUInfo::usage() const
+{
+    return m_usage;
+}
+
+LONG CPUInfo::processCount() const
+{
+    return m_processCount;
+}
+
+LONG CPUInfo::threadCount() const
+{
+    return m_threadCount;
+}
+
+LONG CPUInfo::handleCount() const
+{
+    return m_handleCount;
+}
+
+DWORD CPUInfo::baseSpeed() const
+{
+    return m_baseSpeed;
+}
+
+DWORD CPUInfo::coreCount() const
+{
+    return m_coreCount;
+}
+
+DWORD CPUInfo::logicalProcessorCount() const
+{
+    return m_logicalProcessorCount;
 }

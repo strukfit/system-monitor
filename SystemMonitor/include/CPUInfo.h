@@ -5,6 +5,7 @@
 #include <windows.h>
 #include <psapi.h>
 #include <pdh.h>
+#include "WMIManager.h"
 #pragma comment(lib, "pdh.lib")
 //#else
 //#include <sys/sysinfo.h>
@@ -19,6 +20,8 @@ public:
 	~CPUInfo();
 
 	void updateInfo();
+
+	std::wstring modelName() const;
 
 	double usage() const;
 
@@ -35,10 +38,12 @@ private:
 	void updateCPUInfo();
 	void updateCPUCoreCount();
 	void updateCPUBaseSpeed();
+	void updateCPUModelName();
 
 	PDH_HQUERY m_hQuery;
 	PDH_HCOUNTER m_cpuTotal, m_processCounter, m_threadCounter, m_handleCounter;
 
+	std::wstring m_modelName;
 	double m_usage;
 
 	LONG m_processCount;

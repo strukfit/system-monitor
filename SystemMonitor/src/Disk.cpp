@@ -53,7 +53,7 @@ void Disk::updateInfo()
 
 void Disk::updateActiveTime()
 {
-    std::wstring query = L"SELECT * FROM Win32_PerfFormattedData_PerfDisk_LogicalDisk WHERE Name = \'" + m_diskLetter + L"\'";
+    std::wstring query = L"SELECT PercentDiskTime FROM Win32_PerfFormattedData_PerfDisk_LogicalDisk WHERE Name = \'" + m_diskLetter + L"\'";
     std::wstring property = L"PercentDiskTime";
     std::vector<WMIValue> results;
     

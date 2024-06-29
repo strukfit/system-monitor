@@ -4,10 +4,13 @@
 
 WMIManager::WMIManager()
 {
+    HRESULT hr = CoInitializeEx(0, COINIT_APARTMENTTHREADED);
+    if (FAILED(hr)) return;
 }
 
 WMIManager::~WMIManager()
 {
+    CoUninitialize();
 }
 
 struct WMIManager::Releaser

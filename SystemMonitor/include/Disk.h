@@ -11,7 +11,6 @@
 
 #include "WMIManager.h" 
 
-#pragma comment(lib, "wbemuuid.lib")
 #pragma comment(lib, "pdh.lib")
 //#else
 //#include <sys/sysinfo.h>
