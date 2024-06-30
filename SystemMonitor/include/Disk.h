@@ -18,7 +18,6 @@
 #endif
 
 #include <string>
-#include <QObject>
 #include <iostream>
 
 class Disk
@@ -30,6 +29,7 @@ public:
 	void updateInfo();
 
 	std::wstring diskLetter() const;
+	std::wstring modelName() const;
 
 	byte activeTime() const;
 	LONG readSpeed() const;
@@ -43,12 +43,13 @@ public:
 private:
 	void pdhInit();
 	void updateActiveTime();
+	void updateModelName();
 
 	PDH_HQUERY m_hQuery;
 	PDH_HCOUNTER m_readCounter, m_writeCounter, m_responseTimeCounter;
 
 	const std::wstring m_diskLetter;
-	const std::string m_diskModel;
+	std::wstring m_modelName;
 
 	byte m_activeTime;
 	LONG m_readSpeed;

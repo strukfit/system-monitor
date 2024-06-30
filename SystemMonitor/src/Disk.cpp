@@ -2,7 +2,7 @@
 
 Disk::Disk(const char diskLetter) :
     m_diskLetter({ static_cast<wchar_t>(diskLetter), ':' }),
-    m_diskModel(""),
+    m_modelName(L""),
     m_activeTime(0),
     m_readSpeed(0.f),
     m_writeSpeed(0.f),
@@ -13,6 +13,7 @@ Disk::Disk(const char diskLetter) :
 {
 	//updateInfo();
     pdhInit();
+    updateModelName();
 }
 
 Disk::~Disk() 
@@ -83,9 +84,66 @@ void Disk::updateActiveTime()
         m_activeTime = 100;
 }
 
+void Disk::updateModelName()
+{
+    std::wstring query = L"ASSOCIATORS OF {Win32_LogicalDisk.DeviceID='" + m_diskLetter + L"'} WHERE AssocClass=Win32_LogicalDiskToPartition";
+    std::wstring property = L"DeviceId";
+    std::vector<WMIValue> results;
+
+    WMIManager::execQuery(query, property, results);
+
+    if (results.empty())
+    {
+        m_modelName = L"";
+        return;
+    }
+
+    std::wstring deviceId;
+    for (const auto& result : results)
+    {
+        std::visit([&deviceId](auto&& arg) {
+            using T = std::decay_t<decltype(arg)>;
+            if constexpr (std::is_same_v<T, std::wstring>)
+            {
+                //m_modelName = arg;
+                deviceId = arg;
+            }
+        }, result);
+    }
+
+    
+    query = L"ASSOCIATORS OF {Win32_DiskPartition.DeviceID='" + deviceId + L"'} WHERE AssocClass=Win32_DiskDriveToDiskPartition";
+    property = L"Model";
+    results.clear();
+
+    WMIManager::execQuery(query, property, results);
+
+    if (results.empty())
+    {
+        m_modelName = L"";
+        return;
+    }
+
+    for (const auto& result : results)
+    {
+        std::visit([this](auto&& arg) {
+            using T = std::decay_t<decltype(arg)>;
+            if constexpr (std::is_same_v<T, std::wstring>)
+            {
+                m_modelName = arg;
+            }
+            }, result);
+    }
+}
+
 std::wstring Disk::diskLetter() const
 {
     return m_diskLetter;
+}
+
+std::wstring Disk::modelName() const
+{
+    return m_modelName;
 }
 
 byte Disk::activeTime() const

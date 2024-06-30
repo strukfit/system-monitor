@@ -29,13 +29,15 @@ void updateDisksAsync(DisksInfo& disksInfo, QLabel* diskLabel)
     {
         QString diskText = QString(
             "DISK: %1\n"
-            "DISK_ACTIVE_TIME: %2 %\n"
-            "DISK_USAGE: %3/%4 Gb\n"
-            "DISK_FREE_SPACE: %5 Gb\n"
-            "DISK_READ_SPEED: %6 Mb/s\n"
-            "DISK_WRITE_SPEED: %7 Mb/s\n"
-            "DISK_AVG_RESPONSE_TIME: %8 ms\n\n")
+            "DISK_NAME: %2\n"
+            "DISK_ACTIVE_TIME: %3 %\n"
+            "DISK_USAGE: %4/%5 Gb\n"
+            "DISK_FREE_SPACE: %6 Gb\n"
+            "DISK_READ_SPEED: %7 Mb/s\n"
+            "DISK_WRITE_SPEED: %8 Mb/s\n"
+            "DISK_AVG_RESPONSE_TIME: %9 ms\n\n")
             .arg(disk->diskLetter())
+            .arg(disk->modelName())
             .arg(disk->activeTime())
             .arg(disk->totalUsedBytes() / 1024.f / 1024.f / 1024.f)
             .arg(disk->totalBytes() / 1024.f / 1024.f / 1024.f)
