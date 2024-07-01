@@ -3,7 +3,7 @@
 #include <QLabel>
 #include <QVBoxLayout>
 #include <QTimer>
-#include <QMessageBox>
+#include <QProcess>
 
 #ifdef _WIN32
 #include <windows.h>
