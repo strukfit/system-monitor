@@ -16,10 +16,12 @@
 #include "CPUInfo.h"
 #include "MEMInfo.h"
 #include "DisksInfo.h"
+#include "GPUsInfo.h"
 
 QLabel* cpuLabel;
 QLabel* memLabel;
 QLabel* diskLabel;
+QLabel* gpuLabel;
 
 void updateDisksAsync(DisksInfo& disksInfo, QLabel* diskLabel)
 {
@@ -57,11 +59,11 @@ WMIManager wmiManager;
 CPUInfo cpuInfo;
 MEMInfo memInfo;
 DisksInfo disksInfo;
+GPUsInfo gpusInfo;
 
 Q_SLOT void updateLabels()
 {
     cpuInfo.updateInfo();
-    memInfo.updateInfo();
 
     cpuLabel->setText(QString(
         "CPU_NAME: %1\n"
@@ -81,6 +83,7 @@ Q_SLOT void updateLabels()
         .arg(cpuInfo.coreCount())
         .arg(cpuInfo.logicalProcessorCount()));
 
+    memInfo.updateInfo();
     memLabel->setText(QString(
         "MEM: %1/%2 GB\n"
         "MEM_AVAIL: %3\n"
@@ -94,6 +97,27 @@ Q_SLOT void updateLabels()
         .arg(memInfo.totalPageFileGB())
         .arg(memInfo.availPageFileGB())
         .arg(memInfo.speedMHz()));
+
+    gpusInfo.updateInfo();
+
+    QString gpuLabelText;
+    for (const auto& gpu : gpusInfo.allGPUs())
+    {
+        QString gpuText = QString(
+            "GPU_NAME: %1\n"
+            "GPU_USAGE: %2 %\n"
+            "GPU_MEM_USAGE: %3/%4 Gb\n"
+            "GPU_TEMPERATURE: %5 C\n\n")
+            .arg(gpu->modelName())
+            .arg(gpu->usage() / 1.f)
+            .arg(gpu->memoryUsed() / 1024.f / 1024.f / 1024.f)
+            .arg(gpu->memoryTotal() / 1024.f / 1024.f / 1024.f)
+            .arg(gpu->temperature());
+
+        gpuLabelText.append(gpuText);
+    }
+
+    gpuLabel->setText(gpuLabelText);
 
     std::thread updateDisksThread(updateDisksAsync, std::ref(disksInfo), diskLabel);
     updateDisksThread.detach();
@@ -114,6 +138,9 @@ int main(int argc, char** argv)
 
     memLabel = new QLabel(NULL, centralWidget);
     layout->addWidget(memLabel);
+
+    gpuLabel = new QLabel(NULL, centralWidget);
+    layout->addWidget(gpuLabel);
 
     diskLabel = new QLabel(NULL, centralWidget);
     layout->addWidget(diskLabel);

@@ -20,5 +20,7 @@ public:
 	const std::vector<std::unique_ptr<GPU>>& allGPUs() const;
 
 private:
+	GPUType gpuType(QString modelName);
+
 	std::vector<std::unique_ptr<GPU>> m_allGPUs;
 };

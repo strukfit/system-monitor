@@ -32,7 +32,6 @@ qt_add_executable(${CMAKE_PROJECT_NAME}  ${SOURCES})
 #        WIN32_EXECUTABLE TRUE
 #)
 
-
 target_link_libraries(${CMAKE_PROJECT_NAME}
     PUBLIC
         Qt${QT_VERSION_MAJOR}::Core
@@ -40,6 +39,41 @@ target_link_libraries(${CMAKE_PROJECT_NAME}
 )
 
 target_include_directories(${CMAKE_PROJECT_NAME} PUBLIC "include")
+
+if(WIN32)
+set(CUDA_PATH "D:/CUDA_Toolkit_v12.5")
+set(NVML_NAMES nvml)
+set(NVML_LIB_DIR "${CUDA_PATH}/lib/x64")
+set(NVML_INCLUDE_DIR "${CUDA_PATH}/include")
+
+# .lib import library full path
+find_file(NVML_LIB_PATH
+NO_DEFAULT_PATH
+NAMES nvml.lib
+PATHS ${NVML_LIB_DIR})
+
+# .dll full path
+find_file(NVML_DLL_PATH
+NO_DEFAULT_PATH
+NAMES nvml.dll
+PATHS "C:/Windows/System32")
+
+find_path(NVML_INCLUDE_PATH
+NO_DEFAULT_PATH
+NAMES nvml.h
+PATHS ${NVML_INCLUDE_DIR})
+
+include(FindPackageHandleStandardArgs)
+find_package_handle_standard_args(NVML DEFAULT_MSG NVML_LIB_PATH NVML_INCLUDE_PATH)
+
+if(NVML_FOUND)
+    target_include_directories(${CMAKE_PROJECT_NAME} PUBLIC ${NVML_INCLUDE_PATH})
+    target_link_libraries(${CMAKE_PROJECT_NAME} PUBLIC ${NVML_LIB_PATH})
+else()
+    message(FATAL_ERROR "NVML library not found")
+endif()
+
+endif()
 
 # Resources copy
 set(SOURCE_DIR ${CMAKE_SOURCE_DIR}/Resources)
