@@ -2,8 +2,37 @@
 
 GPUsInfo::GPUsInfo()
 {
+    initNvidiaCards();
+    initAmdCards();
+}
+
+GPUsInfo::~GPUsInfo()
+{
+    // Shutdown NVML library
     nvmlReturn_t result;
-    unsigned int device_count;
+    result = nvmlShutdown();
+    if (NVML_SUCCESS != result) {
+        qDebug() << "Failed to shutdown NVML: " << nvmlErrorString(result);
+        return;
+    }
+}
+
+void GPUsInfo::updateInfo()
+{
+    for (const auto& gpu : m_allGPUs)
+    {
+        gpu->updateInfo();
+    }
+}
+
+const std::vector<std::unique_ptr<GPU>>& GPUsInfo::allGPUs() const
+{
+	return m_allGPUs;
+}
+
+void GPUsInfo::initNvidiaCards()
+{
+    nvmlReturn_t result;
 
     // Initialize NVML library
     result = nvmlInit();
@@ -11,6 +40,8 @@ GPUsInfo::GPUsInfo()
         qDebug() << "Failed to initialize NVML: " << nvmlErrorString(result);
         return;
     }
+
+    unsigned int device_count;
 
     // Get the number of devices in the system
     result = nvmlDeviceGetCount(&device_count);
@@ -39,61 +70,10 @@ GPUsInfo::GPUsInfo()
             continue;
         }
 
-        GPUType type = gpuType(name);
-
-        std::unique_ptr<GPU> gpu;
-        if (type == NVIDIA)
-        {
-            gpu = std::make_unique<GPU>(name, type, device);
-        }
-        else
-        {
-            gpu = std::make_unique<GPU>(name, type);
-        }
-
-        m_allGPUs.push_back(std::move(gpu));
-        
-    }
-
-    // Shutdown NVML library
-    result = nvmlShutdown();
-    if (NVML_SUCCESS != result) {
-        qDebug() << "Failed to shutdown NVML: " << nvmlErrorString(result);
-        return;
+        m_allGPUs.push_back(std::make_unique<GPU>(static_cast<QString>(name), gpu::NVIDIA, device));
     }
 }
 
-GPUsInfo::~GPUsInfo()
+void GPUsInfo::initAmdCards()
 {
-}
-
-void GPUsInfo::updateInfo()
-{
-    for (const auto& gpu : m_allGPUs)
-    {
-        gpu->updateInfo();
-    }
-}
-
-GPUType GPUsInfo::gpuType(QString modelName)
-{
-    if (modelName.contains("NVIDIA", Qt::CaseInsensitive) ||
-        modelName.contains("GeForce", Qt::CaseInsensitive))
-    {
-        return NVIDIA;
-    }
-    else if (modelName.contains("AMD", Qt::CaseInsensitive) ||
-        modelName.contains("Radeon", Qt::CaseInsensitive))
-    {
-        return AMD;
-    }
-    else
-    {
-        return UNKNOWN;
-    }
-}
-
-const std::vector<std::unique_ptr<GPU>>& GPUsInfo::allGPUs() const
-{
-	return m_allGPUs;
 }

@@ -3,18 +3,23 @@
 #include <QString>
 #include <QDebug>
 #include <nvml.h>
+#include "SDK/ADLXHelper/Windows/Cpp/ADLXHelper.h"
+#include "SDK/Include/IPerformanceMonitoring.h"
 
-enum GPUType
+namespace gpu
 {
-	NVIDIA, 
-	AMD,
-	UNKNOWN
-};
+	enum Type
+	{
+		NVIDIA,
+		AMD,
+		UNKNOWN
+	};
+}
 
 class GPU
 {
 public:
-	GPU(QString modelName, GPUType type, nvmlDevice_t device = NULL);
+	GPU(QString modelName, gpu::Type type, nvmlDevice_t device = NULL);
 	~GPU();
 
 	void updateInfo();
@@ -26,8 +31,12 @@ public:
 	unsigned int temperature() const;
 
 private:
+	void updateUsageNvidia();
+	void updateMemoryNvidia();
+	void updateTemperatureNvidia();
+
 	QString m_modelName;
-	GPUType m_type;
+	gpu::Type m_type;
 	nvmlDevice_t m_device;
 
 	unsigned int m_usage;

@@ -5,11 +5,6 @@
 
 #include "GPU.h"
 
-#ifdef _WIN32
-#include "WMIManager.h"
-#else
-#endif
-
 class GPUsInfo
 {
 public:
@@ -20,7 +15,8 @@ public:
 	const std::vector<std::unique_ptr<GPU>>& allGPUs() const;
 
 private:
-	GPUType gpuType(QString modelName);
+	void initNvidiaCards();
+	void initAmdCards();
 
 	std::vector<std::unique_ptr<GPU>> m_allGPUs;
 };
