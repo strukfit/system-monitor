@@ -1,36 +1,47 @@
 #include "GPU.h"
 
-GPU::GPU(QString modelName, gpu::Type type, nvmlDevice_t device):
+GPU::GPU(QString modelName, gpu::Type type, nvmlDevice_t nvmlDevice):
     m_modelName(modelName),
     m_type(type),
-    m_device(device),
+    m_nvmlDevice(nvmlDevice),
+    m_AdlxGpuPtr(nullptr),
     m_usage(0),
     m_memoryUsed(0),
     m_memoryTotal(0),
     m_temperature(0)
 {
-    /*if (m_type == NVIDIA)
+}
+
+GPU::GPU(QString modelName, gpu::Type type, IADLXGPUPtr adlxGpuPtr, IADLXPerformanceMonitoringServicesPtr perfMonitoringServices):
+    m_modelName(modelName),
+    m_type(type),
+    m_nvmlDevice(NULL),
+    m_AdlxGpuPtr(adlxGpuPtr),
+    m_perfMonitoringServices(perfMonitoringServices),
+    m_usage(0),
+    m_memoryUsed(0),
+    m_memoryTotal(0),
+    m_temperature(0)
+{   
+    ADLX_RESULT res;
+
+    res = m_perfMonitoringServices->GetSupportedGPUMetrics(m_AdlxGpuPtr, &m_gpuMetricsSupport);
+    if (!ADLX_SUCCEEDED(res))
     {
-        nvmlReturn_t result;
-        result = nvmlInit();
-        if (result != NVML_SUCCESS) {
-            qDebug() << "Failed to initialize NVML: " << nvmlErrorString(result);
-            return;
-        }
-    }*/
+        qDebug() << "Failed to get supported GPU metrics";
+        return;
+    }
+
+    res = m_perfMonitoringServices->GetCurrentGPUMetrics(m_AdlxGpuPtr, &m_gpuMetrics);
+    if (!ADLX_SUCCEEDED(res))
+    {
+        qDebug() << "Failed to get current GPU metrics";
+        return;
+    }
 }
 
 GPU::~GPU()
 {
-    /*if (m_type == NVIDIA)
-    {
-        nvmlReturn_t result;
-        result = nvmlShutdown();
-        if (result != NVML_SUCCESS) {
-            qDebug() << "Failed to shutdown NVML: " << nvmlErrorString(result);
-            return;
-        }
-    }*/
 }
 
 void GPU::updateUsageNvidia()
@@ -38,7 +49,7 @@ void GPU::updateUsageNvidia()
     nvmlReturn_t result;
 
     nvmlUtilization_t utilization;
-    result = nvmlDeviceGetUtilizationRates(m_device, &utilization);
+    result = nvmlDeviceGetUtilizationRates(m_nvmlDevice, &utilization);
     if (result != NVML_SUCCESS) {
         qDebug() << "Failed to get utilization info: " << nvmlErrorString(result);
         return;
@@ -51,7 +62,7 @@ void GPU::updateMemoryNvidia()
     nvmlReturn_t result;
 
     nvmlMemory_t memory;
-    result = nvmlDeviceGetMemoryInfo(m_device, &memory);
+    result = nvmlDeviceGetMemoryInfo(m_nvmlDevice, &memory);
     if (result != NVML_SUCCESS) {
         qDebug() << "Failed to get memory info: " << nvmlErrorString(result);
         return;
@@ -63,21 +74,127 @@ void GPU::updateMemoryNvidia()
 void GPU::updateTemperatureNvidia()
 {
     nvmlReturn_t result;
-    result = nvmlDeviceGetTemperature(m_device, NVML_TEMPERATURE_GPU, &m_temperature);
+    result = nvmlDeviceGetTemperature(m_nvmlDevice, NVML_TEMPERATURE_GPU, &m_temperature);
     if (result != NVML_SUCCESS) {
         qDebug() << "Failed to get temperature info: " << nvmlErrorString(result);
         return;
     }
 }
 
+void GPU::updateUsageAMD()
+{
+    ADLX_RESULT res;
+
+    // Check GPU usage support status
+    adlx_bool supported = false;
+    res = m_gpuMetricsSupport->IsSupportedGPUUsage(&supported);
+    if (!ADLX_SUCCEEDED(res))
+    {
+        return;
+    }
+
+    if (!supported)
+    {
+        qDebug() << "GPU usage metric reporting is not supported on GPU";
+        return;
+    }
+
+    adlx_double usage;
+    res = m_gpuMetrics->GPUUsage(&usage);
+    if (!ADLX_SUCCEEDED(res))
+    {
+        qDebug() << "Failed to get GPU usage";
+        return;
+    }
+
+    m_usage = static_cast<unsigned int>(usage);
+}
+
+void GPU::updateMemoryAMD()
+{
+    ADLX_RESULT res;
+
+    adlx_uint totalVRAM;
+    res = m_AdlxGpuPtr->TotalVRAM(&totalVRAM);
+    if (!ADLX_SUCCEEDED(res))
+    {
+        qDebug() << "Failed to get GPU total VRAM";
+        return;
+    }
+
+    m_memoryTotal = static_cast<unsigned long long>(totalVRAM * 1024 * 1024);
+    
+    // Display GPU VRAM support status
+    adlx_bool supported = false;
+    res = m_gpuMetricsSupport->IsSupportedGPUVRAM(&supported);
+    if (!ADLX_SUCCEEDED(res))
+    {
+        qDebug() << "GPU VRAM metric reporting is not supported on GPU";
+    }
+
+    if (!supported)
+    {
+        qDebug() << "GPU VRAM metric reporting is not supported on GPU";
+        return;
+    }
+
+    adlx_int VRAM = 0;
+    res = m_gpuMetrics->GPUVRAM(&VRAM);
+    if (!ADLX_SUCCEEDED(res))
+    {
+        qDebug() << "Failed to get GPU VRAM";
+        return;
+    }
+
+    m_memoryUsed = static_cast<unsigned long long>(VRAM * 1024 * 1024);
+}
+
+void GPU::updateTemperatureAMD()
+{
+    ADLX_RESULT res;
+
+    // Check GPU temperature support status
+    adlx_bool supported = false;
+    res = m_gpuMetricsSupport->IsSupportedGPUTemperature(&supported);
+    if (!ADLX_SUCCEEDED(res))
+    {
+        qDebug() << "GPU temperature metric reporting is not supported on GPU";
+    }
+
+    if (!supported)
+    {
+        qDebug() << "GPU temperature metric reporting is not supported on GPU";
+        return;
+    }
+
+    adlx_double temperature = 0;
+    res = m_gpuMetrics->GPUTemperature(&temperature);
+    if (!ADLX_SUCCEEDED(res))
+    {
+        qDebug() << "Failed to get GPU temperature";
+        return;
+    }
+
+    m_temperature = static_cast<unsigned int>(temperature);
+}
+
 void GPU::updateInfo()
 {
-	if (m_type == gpu::NVIDIA)
-	{
+    switch (m_type)
+    {
+    case gpu::NVIDIA:
         updateUsageNvidia();
         updateMemoryNvidia();
         updateTemperatureNvidia();
-	}
+        break;
+    case gpu::AMD:
+        updateUsageAMD();
+        updateMemoryAMD();
+        updateTemperatureAMD();
+        break;
+    default:
+        break;
+    }
 }
 
 QString GPU::modelName() const

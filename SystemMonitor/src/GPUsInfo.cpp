@@ -1,5 +1,7 @@
 #include "GPUsInfo.h"
 
+ADLXHelper GPUsInfo::m_ADLXHelp;
+
 GPUsInfo::GPUsInfo()
 {
     initNvidiaCards();
@@ -11,10 +13,14 @@ GPUsInfo::~GPUsInfo()
     // Shutdown NVML library
     nvmlReturn_t result;
     result = nvmlShutdown();
-    if (NVML_SUCCESS != result) {
+    if (NVML_SUCCESS != result) 
         qDebug() << "Failed to shutdown NVML: " << nvmlErrorString(result);
-        return;
-    }
+
+    // Destroy ADLX
+    ADLX_RESULT res = ADLX_FAIL;
+    res = m_ADLXHelp.Terminate();
+    if(!ADLX_SUCCEEDED(res))
+        qDebug() << "Failed to terminate ADLX";
 }
 
 void GPUsInfo::updateInfo()
@@ -76,4 +82,47 @@ void GPUsInfo::initNvidiaCards()
 
 void GPUsInfo::initAmdCards()
 {
+    ADLX_RESULT  res = ADLX_FAIL;
+
+    // Initialize ADLX
+    res = m_ADLXHelp.Initialize();
+    if (!ADLX_SUCCEEDED(res))
+    {
+        qDebug() << "Failed to initialize ADLX";
+        return;
+    }
+
+    // Get Performance Monitoring services
+    IADLXPerformanceMonitoringServicesPtr perfMonitoringServices;
+    res = m_ADLXHelp.GetSystemServices()->GetPerformanceMonitoringServices(&perfMonitoringServices);
+    if (!ADLX_SUCCEEDED(res))
+    {
+        qDebug() << "Failed to get performance monitoring services";
+        return;
+    }
+
+    // Get GPU list
+    IADLXGPUListPtr gpus;
+    res = m_ADLXHelp.GetSystemServices()->GetGPUs(&gpus);
+    if (!ADLX_SUCCEEDED(res))
+    {
+        qDebug() << "Failed to get GPU list";
+        return;
+    }
+
+    for (auto it = gpus->Begin(); it < gpus->End(); it++)
+    {
+        IADLXGPUPtr gpu;
+        res = gpus->At(it, &gpu);
+        if (!ADLX_SUCCEEDED(res))
+        {
+            qDebug() << "Failed to get particular GPU";
+            continue;
+        }
+
+        const char* gpuName = nullptr;
+        gpu->Name(&gpuName);
+
+        m_allGPUs.push_back(std::make_unique<GPU>(static_cast<QString>(gpuName), gpu::AMD, gpu, perfMonitoringServices));
+    }
 }

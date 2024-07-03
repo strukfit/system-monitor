@@ -16,10 +16,13 @@ namespace gpu
 	};
 }
 
+using namespace adlx;
+
 class GPU
 {
 public:
-	GPU(QString modelName, gpu::Type type, nvmlDevice_t device = NULL);
+	GPU(QString modelName, gpu::Type type, nvmlDevice_t nvmlDevice);
+	GPU(QString modelName, gpu::Type type, IADLXGPUPtr adlxGpuPtr, IADLXPerformanceMonitoringServicesPtr perfMonitoringServices);
 	~GPU();
 
 	void updateInfo();
@@ -35,9 +38,20 @@ private:
 	void updateMemoryNvidia();
 	void updateTemperatureNvidia();
 
+	void updateUsageAMD();
+	void updateMemoryAMD();
+	void updateTemperatureAMD();
+
+	nvmlDevice_t m_nvmlDevice;
+
+	IADLXGPUPtr m_AdlxGpuPtr;
+	IADLXPerformanceMonitoringServicesPtr m_perfMonitoringServices;
+	IADLXGPUMetricsSupportPtr m_gpuMetricsSupport;
+	IADLXGPUMetricsPtr m_gpuMetrics;
+
 	QString m_modelName;
+
 	gpu::Type m_type;
-	nvmlDevice_t m_device;
 
 	unsigned int m_usage;
 	unsigned long long m_memoryUsed;

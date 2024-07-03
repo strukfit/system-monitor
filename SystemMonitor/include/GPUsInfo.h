@@ -18,5 +18,7 @@ private:
 	void initNvidiaCards();
 	void initAmdCards();
 
+	static ADLXHelper m_ADLXHelp;
+
 	std::vector<std::unique_ptr<GPU>> m_allGPUs;
 };
