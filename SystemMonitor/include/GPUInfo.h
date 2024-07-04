@@ -23,16 +23,16 @@ namespace gpu
 using namespace adlx;
 #endif // _WIN32
 
-class GPU
+class GPUInfo
 {
 public:
 #ifdef _WIN32
-	GPU(QString modelName, gpu::Type type, nvmlDevice_t nvmlDevice);
-	GPU(QString modelName, gpu::Type type, IADLXGPUPtr adlxGpuPtr, IADLXPerformanceMonitoringServicesPtr perfMonitoringServices);
+	GPUInfo(QString modelName, gpu::Type type, nvmlDevice_t nvmlDevice);
+	GPUInfo(QString modelName, gpu::Type type, IADLXGPUPtr adlxGpuPtr, IADLXPerformanceMonitoringServicesPtr perfMonitoringServices);
 #endif // _WIN32
 
-	GPU();
-	~GPU();
+	GPUInfo();
+	~GPUInfo();
 
 	void updateInfo();
 

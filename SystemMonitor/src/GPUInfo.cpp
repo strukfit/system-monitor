@@ -1,7 +1,7 @@
-#include "GPU.h"
+#include "GPUInfo.h"
 
 #ifdef _WIN32
-GPU::GPU(QString modelName, gpu::Type type, nvmlDevice_t nvmlDevice) :
+GPUInfo::GPUInfo(QString modelName, gpu::Type type, nvmlDevice_t nvmlDevice) :
     m_modelName(modelName),
     m_type(type),
     m_nvmlDevice(nvmlDevice),
@@ -13,7 +13,7 @@ GPU::GPU(QString modelName, gpu::Type type, nvmlDevice_t nvmlDevice) :
 {
 }
 
-GPU::GPU(QString modelName, gpu::Type type, IADLXGPUPtr adlxGpuPtr, IADLXPerformanceMonitoringServicesPtr perfMonitoringServices) :
+GPUInfo::GPUInfo(QString modelName, gpu::Type type, IADLXGPUPtr adlxGpuPtr, IADLXPerformanceMonitoringServicesPtr perfMonitoringServices) :
     m_modelName(modelName),
     m_type(type),
     m_nvmlDevice(NULL),
@@ -42,15 +42,15 @@ GPU::GPU(QString modelName, gpu::Type type, IADLXGPUPtr adlxGpuPtr, IADLXPerform
 }
 #endif // _WIN32
 
-GPU::GPU()
+GPUInfo::GPUInfo()
 {
 }
 
-GPU::~GPU()
+GPUInfo::~GPUInfo()
 {
 }
 
-void GPU::updateUsageNvidia()
+void GPUInfo::updateUsageNvidia()
 {
 #ifdef _WIN32
     nvmlReturn_t result;
@@ -65,7 +65,7 @@ void GPU::updateUsageNvidia()
 #endif // _WIN32
 }
 
-void GPU::updateMemoryNvidia()
+void GPUInfo::updateMemoryNvidia()
 {
 #ifdef _WIN32
     nvmlReturn_t result;
@@ -81,7 +81,7 @@ void GPU::updateMemoryNvidia()
 #endif // _WIN32
 }
 
-void GPU::updateTemperatureNvidia()
+void GPUInfo::updateTemperatureNvidia()
 {
 #ifdef _WIN32
     nvmlReturn_t result;
@@ -93,7 +93,7 @@ void GPU::updateTemperatureNvidia()
 #endif // _WIN32
 }
 
-void GPU::updateUsageAMD()
+void GPUInfo::updateUsageAMD()
 {
 #ifdef _WIN32
     ADLX_RESULT res;
@@ -124,7 +124,7 @@ void GPU::updateUsageAMD()
 #endif // _WIN32
 }
 
-void GPU::updateMemoryAMD()
+void GPUInfo::updateMemoryAMD()
 {
 #ifdef _WIN32
     ADLX_RESULT res;
@@ -165,7 +165,7 @@ void GPU::updateMemoryAMD()
 #endif // _WIN32
 }
 
-void GPU::updateTemperatureAMD()
+void GPUInfo::updateTemperatureAMD()
 {
 #ifdef _WIN32
     ADLX_RESULT res;
@@ -197,7 +197,7 @@ void GPU::updateTemperatureAMD()
 
 }
 
-void GPU::updateInfo()
+void GPUInfo::updateInfo()
 {
     switch (m_type)
     {
@@ -216,27 +216,27 @@ void GPU::updateInfo()
     }
 }
 
-QString GPU::modelName() const
+QString GPUInfo::modelName() const
 {
     return m_modelName;
 }
 
-unsigned int GPU::usage() const
+unsigned int GPUInfo::usage() const
 {
     return m_usage;
 }
 
-unsigned long long GPU::memoryUsed() const
+unsigned long long GPUInfo::memoryUsed() const
 {
     return m_memoryUsed;
 }
 
-unsigned long long GPU::memoryTotal() const
+unsigned long long GPUInfo::memoryTotal() const
 {
     return m_memoryTotal;
 }
 
-unsigned int GPU::temperature() const
+unsigned int GPUInfo::temperature() const
 {
     return m_temperature;
 }
