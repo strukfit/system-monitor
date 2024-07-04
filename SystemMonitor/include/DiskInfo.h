@@ -24,11 +24,11 @@
 using byte = unsigned char;
 using ulonglong = unsigned long long;
 
-class Disk
+class DiskInfo
 {
 public:
-	Disk(const char diskLetter);
-	~Disk();
+	DiskInfo(const char diskLetter);
+	~DiskInfo();
 
 	void updateInfo();
 

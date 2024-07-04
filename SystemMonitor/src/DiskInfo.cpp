@@ -1,6 +1,6 @@
-#include "Disk.h"
+#include "DiskInfo.h"
 
-Disk::Disk(const char diskLetter) :
+DiskInfo::DiskInfo(const char diskLetter) :
     m_diskLetter({ static_cast<wchar_t>(diskLetter), ':' }),
     m_modelName(L""),
     m_activeTime(0),
@@ -18,12 +18,12 @@ Disk::Disk(const char diskLetter) :
     updateModelName();
 }
 
-Disk::~Disk() 
+DiskInfo::~DiskInfo()
 {
 }
 
 #ifdef _WIN32
-void Disk::pdhInit()
+void DiskInfo::pdhInit()
 {
     PdhOpenQuery(NULL, NULL, &m_hQuery);
     PdhAddEnglishCounter(m_hQuery, (L"\\LogicalDisk(" + m_diskLetter + L")\\Disk Read Bytes/sec").c_str(), NULL, &m_readCounter);
@@ -34,7 +34,7 @@ void Disk::pdhInit()
 #endif // _WIN32
 
 
-void Disk::updateInfo()
+void DiskInfo::updateInfo()
 {
 #ifdef _WIN32
     ULARGE_INTEGER freeBytesAvailable, totalNumberOfBytes, totalNumberOfFreeBytes;
@@ -59,7 +59,7 @@ void Disk::updateInfo()
     updateActiveTime();
 }
 
-void Disk::updateActiveTime()
+void DiskInfo::updateActiveTime()
 {
 #ifdef _WIN32
     std::wstring query = L"SELECT PercentDiskTime FROM Win32_PerfFormattedData_PerfDisk_LogicalDisk WHERE Name = \'" + m_diskLetter + L"\'";
@@ -93,7 +93,7 @@ void Disk::updateActiveTime()
 #endif // _WIN32
 }
 
-void Disk::updateModelName()
+void DiskInfo::updateModelName()
 {
 #ifdef _WIN32
     std::wstring query = L"ASSOCIATORS OF {Win32_LogicalDisk.DeviceID='" + m_diskLetter + L"'} WHERE AssocClass=Win32_LogicalDiskToPartition";
@@ -147,47 +147,47 @@ void Disk::updateModelName()
 #endif // _WIN32
 }
 
-std::wstring Disk::diskLetter() const
+std::wstring DiskInfo::diskLetter() const
 {
     return m_diskLetter;
 }
 
-std::wstring Disk::modelName() const
+std::wstring DiskInfo::modelName() const
 {
     return m_modelName;
 }
 
-byte Disk::activeTime() const
+byte DiskInfo::activeTime() const
 {
     return m_activeTime;
 }
 
-long Disk::readSpeed() const
+long DiskInfo::readSpeed() const
 {
     return m_readSpeed;
 }
 
-long Disk::writeSpeed() const
+long DiskInfo::writeSpeed() const
 {
     return m_writeSpeed;
 }
 
-double Disk::avgResponseTime() const
+double DiskInfo::avgResponseTime() const
 {
     return m_avgResponseTime;
 }
 
-ulonglong Disk::totalUsedBytes() const
+ulonglong DiskInfo::totalUsedBytes() const
 {
     return m_totalUsedBytes;
 }
 
-ulonglong Disk::totalBytes() const
+ulonglong DiskInfo::totalBytes() const
 {
     return m_totalBytes;
 }
 
-ulonglong Disk::totalFreeBytes() const
+ulonglong DiskInfo::totalFreeBytes() const
 {
     return m_totalFreeBytes;
 }

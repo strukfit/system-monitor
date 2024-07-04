@@ -5,6 +5,10 @@
 #include <QTimer>
 #include <QProcess>
 
+#include <memory>
+#include <thread>
+#include <ranges>
+
 #ifdef _WIN32
 #include <windows.h>
 #include "WMIManager.h"
@@ -17,14 +21,9 @@
 
 #include "CPUInfo.h"
 #include "MEMInfo.h"
-#include "DisksInfo.h"
+#include "DiskInfo.h"
 #include "GPUsInfo.h"
 
-
-QLabel* cpuLabel;
-QLabel* memLabel;
-QLabel* diskLabel;
-QLabel* gpuLabel;
 
 static void updateCPUAsync(CPUInfo& cpuInfo, QLabel* cpuLabel)
 {
@@ -93,33 +92,38 @@ static void updateGPUsAsync(GPUsInfo& gpusInfo, QLabel* gpuLabel)
     QMetaObject::invokeMethod(gpuLabel, "setText", Qt::QueuedConnection, Q_ARG(QString, labelText));
 }
 
-static void updateDisksAsync(DisksInfo& disksInfo, QLabel* diskLabel)
-{
-    disksInfo.updateInfo();
-    QString labelText;
-    for (const auto& disk : disksInfo.allDisks())
-    {
-        QString diskText = QString(
-            "DISK: %1\n"
-            "DISK_NAME: %2\n"
-            "DISK_ACTIVE_TIME: %3 %\n"
-            "DISK_USAGE: %4/%5 Gb\n"
-            "DISK_FREE_SPACE: %6 Gb\n"
-            "DISK_READ_SPEED: %7 Mb/s\n"
-            "DISK_WRITE_SPEED: %8 Mb/s\n"
-            "DISK_AVG_RESPONSE_TIME: %9 ms\n\n")
-            .arg(QString::fromStdWString(disk->diskLetter()))
-            .arg(QString::fromStdWString(disk->modelName()))
-            .arg(disk->activeTime())
-            .arg(disk->totalUsedBytes() / 1024.f / 1024.f / 1024.f)
-            .arg(disk->totalBytes() / 1024.f / 1024.f / 1024.f)
-            .arg(disk->totalFreeBytes() / 1024.f / 1024.f / 1024.f)
-            .arg(disk->readSpeed() / 1024.f / 1024.f)
-            .arg(disk->writeSpeed() / 1024.f / 1024.f)
-            .arg(disk->avgResponseTime() * 1000.f);
+//std::vector<std::future<void>> futures;
+//for (auto& disk : m_allDisks)
+//{
+//    futures.emplace_back(std::async(std::launch::async, [&disk]() {
+//        disk->updateInfo();
+//        }));
+//}
+//
+//for (auto& future : futures)
+//future.get();
 
-        labelText.append(diskText);
-    }
+static void updateDiskAsync(std::unique_ptr<DiskInfo>& diskInfo, QLabel* diskLabel)
+{
+    diskInfo->updateInfo();
+    QString labelText = QString(
+        "DISK: %1\n"
+        "DISK_NAME: %2\n"
+        "DISK_ACTIVE_TIME: %3 %\n"
+        "DISK_USAGE: %4/%5 Gb\n"
+        "DISK_FREE_SPACE: %6 Gb\n"
+        "DISK_READ_SPEED: %7 Mb/s\n"
+        "DISK_WRITE_SPEED: %8 Mb/s\n"
+        "DISK_AVG_RESPONSE_TIME: %9 ms\n\n")
+        .arg(QString::fromStdWString(diskInfo->diskLetter()))
+        .arg(QString::fromStdWString(diskInfo->modelName()))
+        .arg(diskInfo->activeTime())
+        .arg(diskInfo->totalUsedBytes() / 1024.f / 1024.f / 1024.f)
+        .arg(diskInfo->totalBytes() / 1024.f / 1024.f / 1024.f)
+        .arg(diskInfo->totalFreeBytes() / 1024.f / 1024.f / 1024.f)
+        .arg(diskInfo->readSpeed() / 1024.f / 1024.f)
+        .arg(diskInfo->writeSpeed() / 1024.f / 1024.f)
+        .arg(diskInfo->avgResponseTime() * 1000.f);
 
     QMetaObject::invokeMethod(diskLabel, "setText", Qt::QueuedConnection, Q_ARG(QString, labelText));
 }
@@ -128,10 +132,33 @@ static void updateDisksAsync(DisksInfo& disksInfo, QLabel* diskLabel)
 WMIManager wmiManager;
 #endif
 
+QLabel* cpuLabel;
+QLabel* memLabel;
+QLabel* diskLabel;
+QLabel* gpuLabel;
+
 CPUInfo cpuInfo;
 MEMInfo memInfo;
-DisksInfo disksInfo;
+
+std::vector<std::unique_ptr<DiskInfo>> allDisks;
+std::vector<QLabel*> allDisksLabels;
+
 GPUsInfo gpusInfo;
+
+void initDisks()
+{
+#ifdef _WIN32
+    DWORD drivesMask = GetLogicalDrives();
+    for (char letter = 'A'; letter <= 'Z'; ++letter)
+    {
+        // If the bit is set, the disk exists
+        if (drivesMask & 1)
+            allDisks.push_back(std::make_unique<DiskInfo>(letter));
+        
+        drivesMask >>= 1;
+    }
+#endif // _WIN32
+}
 
 Q_SLOT void updateLabels()
 {
@@ -144,8 +171,11 @@ Q_SLOT void updateLabels()
     std::thread updateGPUsThread(updateGPUsAsync, std::ref(gpusInfo), gpuLabel);
     updateGPUsThread.detach();
 
-    std::thread updateDisksThread(updateDisksAsync, std::ref(disksInfo), diskLabel);
-    updateDisksThread.detach();
+    for (auto [disk, label] : std::ranges::views::zip(allDisks, allDisksLabels))
+    {
+        std::thread updateDiskThread(updateDiskAsync, std::ref(disk), label);
+        updateDiskThread.detach();
+    }
 }
 
 int main(int argc, char** argv)
@@ -158,17 +188,26 @@ int main(int argc, char** argv)
 
     auto layout = new QVBoxLayout(centralWidget);
 
-    cpuLabel = new QLabel(NULL, centralWidget);
+    cpuLabel = new QLabel(nullptr, centralWidget);
     layout->addWidget(cpuLabel);
 
-    memLabel = new QLabel(NULL, centralWidget);
+    memLabel = new QLabel(nullptr, centralWidget);
     layout->addWidget(memLabel);
 
-    gpuLabel = new QLabel(NULL, centralWidget);
+    gpuLabel = new QLabel(nullptr, centralWidget);
     layout->addWidget(gpuLabel);
 
-    diskLabel = new QLabel(NULL, centralWidget);
+    diskLabel = new QLabel(nullptr, centralWidget);
     layout->addWidget(diskLabel);
+
+    initDisks();
+
+    for (int i = 0; i < allDisks.size(); i++)
+    {
+        auto diskLabel = new QLabel(NULL, centralWidget);
+        layout->addWidget(diskLabel);
+        allDisksLabels.push_back(diskLabel);
+    }
 
     updateLabels();
 
