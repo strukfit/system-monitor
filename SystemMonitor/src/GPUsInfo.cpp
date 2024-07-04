@@ -1,6 +1,8 @@
 #include "GPUsInfo.h"
 
+#ifdef _WIN32
 ADLXHelper GPUsInfo::m_ADLXHelp;
+#endif // _WIN32
 
 GPUsInfo::GPUsInfo()
 {
@@ -10,17 +12,20 @@ GPUsInfo::GPUsInfo()
 
 GPUsInfo::~GPUsInfo()
 {
+#ifdef _WIN32
     // Shutdown NVML library
     nvmlReturn_t result;
     result = nvmlShutdown();
-    if (NVML_SUCCESS != result) 
+    if (NVML_SUCCESS != result)
         qDebug() << "Failed to shutdown NVML: " << nvmlErrorString(result);
 
     // Destroy ADLX
     ADLX_RESULT res = ADLX_FAIL;
     res = m_ADLXHelp.Terminate();
-    if(ADLX_FAILED(res))
+    if (ADLX_FAILED(res))
         qDebug() << "Failed to terminate ADLX";
+#endif // _WIN32
+
 }
 
 void GPUsInfo::updateInfo()
@@ -38,6 +43,7 @@ const std::vector<std::unique_ptr<GPU>>& GPUsInfo::allGPUs() const
 
 void GPUsInfo::initNvidiaCards()
 {
+#ifdef _WIN32
     nvmlReturn_t result;
 
     // Initialize NVML library
@@ -78,10 +84,12 @@ void GPUsInfo::initNvidiaCards()
 
         m_allGPUs.push_back(std::make_unique<GPU>(static_cast<QString>(name), gpu::NVIDIA, device));
     }
+#endif // _WIN32
 }
 
 void GPUsInfo::initAmdCards()
 {
+#ifdef _WIN32
     ADLX_RESULT  res = ADLX_FAIL;
 
     // Initialize ADLX
@@ -125,4 +133,6 @@ void GPUsInfo::initAmdCards()
 
         m_allGPUs.push_back(std::make_unique<GPU>(static_cast<QString>(gpuName), gpu::AMD, gpu, perfMonitoringServices));
     }
+#endif // _WIN32
+
 }

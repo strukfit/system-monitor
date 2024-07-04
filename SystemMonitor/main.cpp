@@ -8,10 +8,12 @@
 #ifdef _WIN32
 #include <windows.h>
 #include "WMIManager.h"
-//#else 
-//#include <sys/sysinfo.h>
-//#include <fstream>
-#endif
+#endif // _WIN32
+
+#ifdef __unix__
+
+#endif // __unix__
+
 
 #include "CPUInfo.h"
 #include "MEMInfo.h"
@@ -36,7 +38,7 @@ static void updateCPUAsync(CPUInfo& cpuInfo, QLabel* cpuLabel)
         "CPU_BASE_SPEED: %6 GHz\n"
         "CPU_CORES: %7\n"
         "CPU_LOGIC_PROC: %8\n")
-        .arg(cpuInfo.modelName())
+        .arg(QString::fromStdWString(cpuInfo.modelName()))
         .arg(cpuInfo.usage())
         .arg(cpuInfo.processCount())
         .arg(cpuInfo.threadCount())
@@ -106,8 +108,8 @@ static void updateDisksAsync(DisksInfo& disksInfo, QLabel* diskLabel)
             "DISK_READ_SPEED: %7 Mb/s\n"
             "DISK_WRITE_SPEED: %8 Mb/s\n"
             "DISK_AVG_RESPONSE_TIME: %9 ms\n\n")
-            .arg(disk->diskLetter())
-            .arg(disk->modelName())
+            .arg(QString::fromStdWString(disk->diskLetter()))
+            .arg(QString::fromStdWString(disk->modelName()))
             .arg(disk->activeTime())
             .arg(disk->totalUsedBytes() / 1024.f / 1024.f / 1024.f)
             .arg(disk->totalBytes() / 1024.f / 1024.f / 1024.f)
@@ -122,7 +124,9 @@ static void updateDisksAsync(DisksInfo& disksInfo, QLabel* diskLabel)
     QMetaObject::invokeMethod(diskLabel, "setText", Qt::QueuedConnection, Q_ARG(QString, labelText));
 }
 
+#ifdef _WIN32
 WMIManager wmiManager;
+#endif
 
 CPUInfo cpuInfo;
 MEMInfo memInfo;

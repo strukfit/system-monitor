@@ -1,10 +1,13 @@
 #pragma once
 
-#include <QString>
-#include <QDebug>
+#ifdef _WIN32
 #include <nvml.h>
 #include "SDK/ADLXHelper/Windows/Cpp/ADLXHelper.h"
-#include "SDK/Include/IPerformanceMonitoring.h"
+#include "SDK/Include/IPerformanceMonitoring.h"  
+#endif // _WIN32
+
+#include <QString>
+#include <QDebug>
 
 namespace gpu
 {
@@ -16,13 +19,19 @@ namespace gpu
 	};
 }
 
+#ifdef _WIN32
 using namespace adlx;
+#endif // _WIN32
 
 class GPU
 {
 public:
+#ifdef _WIN32
 	GPU(QString modelName, gpu::Type type, nvmlDevice_t nvmlDevice);
 	GPU(QString modelName, gpu::Type type, IADLXGPUPtr adlxGpuPtr, IADLXPerformanceMonitoringServicesPtr perfMonitoringServices);
+#endif // _WIN32
+
+	GPU();
 	~GPU();
 
 	void updateInfo();
@@ -42,12 +51,14 @@ private:
 	void updateMemoryAMD();
 	void updateTemperatureAMD();
 
+#ifdef _WIN32
 	nvmlDevice_t m_nvmlDevice;
 
 	IADLXGPUPtr m_AdlxGpuPtr;
 	IADLXPerformanceMonitoringServicesPtr m_perfMonitoringServices;
 	IADLXGPUMetricsSupportPtr m_gpuMetricsSupport;
 	IADLXGPUMetricsPtr m_gpuMetrics;
+#endif // _WIN32
 
 	QString m_modelName;
 

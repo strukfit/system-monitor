@@ -1,6 +1,7 @@
 #include "GPU.h"
 
-GPU::GPU(QString modelName, gpu::Type type, nvmlDevice_t nvmlDevice):
+#ifdef _WIN32
+GPU::GPU(QString modelName, gpu::Type type, nvmlDevice_t nvmlDevice) :
     m_modelName(modelName),
     m_type(type),
     m_nvmlDevice(nvmlDevice),
@@ -12,7 +13,7 @@ GPU::GPU(QString modelName, gpu::Type type, nvmlDevice_t nvmlDevice):
 {
 }
 
-GPU::GPU(QString modelName, gpu::Type type, IADLXGPUPtr adlxGpuPtr, IADLXPerformanceMonitoringServicesPtr perfMonitoringServices):
+GPU::GPU(QString modelName, gpu::Type type, IADLXGPUPtr adlxGpuPtr, IADLXPerformanceMonitoringServicesPtr perfMonitoringServices) :
     m_modelName(modelName),
     m_type(type),
     m_nvmlDevice(NULL),
@@ -22,7 +23,7 @@ GPU::GPU(QString modelName, gpu::Type type, IADLXGPUPtr adlxGpuPtr, IADLXPerform
     m_memoryUsed(0),
     m_memoryTotal(0),
     m_temperature(0)
-{   
+{
     ADLX_RESULT res;
 
     res = m_perfMonitoringServices->GetSupportedGPUMetrics(m_AdlxGpuPtr, &m_gpuMetricsSupport);
@@ -39,6 +40,11 @@ GPU::GPU(QString modelName, gpu::Type type, IADLXGPUPtr adlxGpuPtr, IADLXPerform
         return;
     }
 }
+#endif // _WIN32
+
+GPU::GPU()
+{
+}
 
 GPU::~GPU()
 {
@@ -46,6 +52,7 @@ GPU::~GPU()
 
 void GPU::updateUsageNvidia()
 {
+#ifdef _WIN32
     nvmlReturn_t result;
 
     nvmlUtilization_t utilization;
@@ -55,10 +62,12 @@ void GPU::updateUsageNvidia()
         return;
     }
     m_usage = utilization.gpu;
+#endif // _WIN32
 }
 
 void GPU::updateMemoryNvidia()
 {
+#ifdef _WIN32
     nvmlReturn_t result;
 
     nvmlMemory_t memory;
@@ -69,20 +78,24 @@ void GPU::updateMemoryNvidia()
     }
     m_memoryUsed = memory.used;
     m_memoryTotal = memory.total;
+#endif // _WIN32
 }
 
 void GPU::updateTemperatureNvidia()
 {
+#ifdef _WIN32
     nvmlReturn_t result;
     result = nvmlDeviceGetTemperature(m_nvmlDevice, NVML_TEMPERATURE_GPU, &m_temperature);
     if (result != NVML_SUCCESS) {
         qDebug() << "Failed to get temperature info: " << nvmlErrorString(result);
         return;
     }
+#endif // _WIN32
 }
 
 void GPU::updateUsageAMD()
 {
+#ifdef _WIN32
     ADLX_RESULT res;
 
     // Check GPU usage support status
@@ -98,7 +111,7 @@ void GPU::updateUsageAMD()
         qDebug() << "GPU usage metric reporting is not supported on GPU";
         return;
     }
-    
+
     adlx_double usage;
     res = m_gpuMetrics->GPUUsage(&usage);
     if (ADLX_FAILED(res))
@@ -108,10 +121,12 @@ void GPU::updateUsageAMD()
     }
 
     m_usage = static_cast<unsigned int>(usage);
+#endif // _WIN32
 }
 
 void GPU::updateMemoryAMD()
 {
+#ifdef _WIN32
     ADLX_RESULT res;
 
     adlx_uint totalVRAM;
@@ -147,10 +162,12 @@ void GPU::updateMemoryAMD()
     }
 
     m_memoryUsed = static_cast<unsigned long long>(VRAM * 1024 * 1024);
+#endif // _WIN32
 }
 
 void GPU::updateTemperatureAMD()
 {
+#ifdef _WIN32
     ADLX_RESULT res;
 
     // Check GPU temperature support status
@@ -176,6 +193,8 @@ void GPU::updateTemperatureAMD()
     }
 
     m_temperature = static_cast<unsigned int>(temperature);
+#endif // _WIN32
+
 }
 
 void GPU::updateInfo()

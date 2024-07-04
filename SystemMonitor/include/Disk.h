@@ -12,13 +12,17 @@
 #include "WMIManager.h" 
 
 #pragma comment(lib, "pdh.lib")
-//#else
-//#include <sys/sysinfo.h>
-//#include <fstream>
+#endif
+
+#ifdef __unix__
+
 #endif
 
 #include <string>
 #include <iostream>
+
+using byte = unsigned char;
+using ulonglong = unsigned long long;
 
 class Disk
 {
@@ -32,31 +36,34 @@ public:
 	std::wstring modelName() const;
 
 	byte activeTime() const;
-	LONG readSpeed() const;
-	LONG writeSpeed() const;
+	long readSpeed() const;
+	long writeSpeed() const;
 	double avgResponseTime() const;
 
-	ULONGLONG totalUsedBytes() const;
-	ULONGLONG totalBytes() const;
-	ULONGLONG totalFreeBytes() const;
+	ulonglong totalUsedBytes() const;
+	ulonglong totalBytes() const;
+	ulonglong totalFreeBytes() const;
 
 private:
+#ifdef _WIN32
 	void pdhInit();
-	void updateActiveTime();
-	void updateModelName();
 
 	PDH_HQUERY m_hQuery;
 	PDH_HCOUNTER m_readCounter, m_writeCounter, m_responseTimeCounter;
+#endif // _WIN32
+
+	void updateActiveTime();
+	void updateModelName();
 
 	const std::wstring m_diskLetter;
 	std::wstring m_modelName;
 
 	byte m_activeTime;
-	LONG m_readSpeed;
-	LONG m_writeSpeed;
+	long m_readSpeed;
+	long m_writeSpeed;
 	double m_avgResponseTime;
 
-	ULONGLONG m_totalUsedBytes;
-	ULONGLONG m_totalBytes;
-	ULONGLONG m_totalFreeBytes;
+	ulonglong m_totalUsedBytes;
+	ulonglong m_totalBytes;
+	ulonglong m_totalFreeBytes;
 };

@@ -9,8 +9,9 @@ CPUInfo::CPUInfo():
     m_coreCount(0),
     m_logicalProcessorCount(0)
 {
+#ifdef _WIN32
     pdhInit();
-
+#endif // _WIN32
     // Update constant variables
     updateCPUCoreCount();
     updateCPUBaseSpeed();
@@ -19,7 +20,9 @@ CPUInfo::CPUInfo():
 
 CPUInfo::~CPUInfo()
 {
+#ifdef _WIN32
     PdhCloseQuery(&m_hQuery);
+#endif // _WIN32
 }
 
 void CPUInfo::updateInfo()
@@ -28,6 +31,7 @@ void CPUInfo::updateInfo()
     updateCPUInfo();
 }
 
+#ifdef _WIN32
 void CPUInfo::pdhInit()
 {
     PdhOpenQuery(NULL, NULL, &m_hQuery);
@@ -37,9 +41,12 @@ void CPUInfo::pdhInit()
     PdhAddEnglishCounter(m_hQuery, L"\\Process(_Total)\\Handle Count", NULL, &m_handleCounter);
     PdhCollectQueryData(m_hQuery);
 }
+#endif // _WIN32
+
 
 void CPUInfo::updateCPUInfo()
 {
+#ifdef _WIN32
     PDH_FMT_COUNTERVALUE usageVal, processVal, threadVal, handleVal;
 
     PdhCollectQueryData(m_hQuery);
@@ -49,12 +56,15 @@ void CPUInfo::updateCPUInfo()
     PdhGetFormattedCounterValue(m_handleCounter, PDH_FMT_LONG, NULL, &handleVal);
 
     m_usage = usageVal.doubleValue;
-    m_processCount = processVal.longValue;
-    m_threadCount = threadVal.longValue;
-    m_handleCount = handleVal.longValue;
+    m_processCount = static_cast<int>(processVal.longValue);
+    m_threadCount = static_cast<int>(threadVal.longValue);
+    m_handleCount = static_cast<int>(handleVal.longValue);
+#endif // _WIN32
+
 }
 
 void CPUInfo::updateCPUCoreCount() {
+#ifdef _WIN32
     SYSTEM_INFO sysInfo;
     GetSystemInfo(&sysInfo);
 
@@ -77,9 +87,11 @@ void CPUInfo::updateCPUCoreCount() {
         info = reinterpret_cast<PSYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX>(reinterpret_cast<char*>(info) + info->Size);
     }
     m_coreCount = processorCount;
+#endif
 }
 
 void CPUInfo::updateCPUBaseSpeed() {
+#ifdef _WIN32
     HKEY hKey;
     LONG lError = RegOpenKeyEx(HKEY_LOCAL_MACHINE,
         TEXT("HARDWARE\\DESCRIPTION\\System\\CentralProcessor\\0"),
@@ -94,10 +106,12 @@ void CPUInfo::updateCPUBaseSpeed() {
         RegCloseKey(hKey);
     }
     m_baseSpeed = mhz / 1000.f;
+#endif // _WIN32
 }
 
 void CPUInfo::updateCPUModelName()
 {
+#ifdef _WIN32
     std::wstring query = L"SELECT Name FROM Win32_Processor";
     std::wstring property = L"Name";
     std::vector<WMIValue> results;
@@ -120,6 +134,7 @@ void CPUInfo::updateCPUModelName()
             }
         }, result);
     }
+#endif
 }
 
 std::wstring CPUInfo::modelName() const
@@ -132,32 +147,32 @@ double CPUInfo::usage() const
     return m_usage;
 }
 
-LONG CPUInfo::processCount() const
+int CPUInfo::processCount() const
 {
     return m_processCount;
 }
 
-LONG CPUInfo::threadCount() const
+int CPUInfo::threadCount() const
 {
     return m_threadCount;
 }
 
-LONG CPUInfo::handleCount() const
+int CPUInfo::handleCount() const
 {
     return m_handleCount;
 }
 
-DWORD CPUInfo::baseSpeed() const
+unsigned long CPUInfo::baseSpeed() const
 {
     return m_baseSpeed;
 }
 
-DWORD CPUInfo::coreCount() const
+unsigned long CPUInfo::coreCount() const
 {
     return m_coreCount;
 }
 
-DWORD CPUInfo::logicalProcessorCount() const
+unsigned long CPUInfo::logicalProcessorCount() const
 {
     return m_logicalProcessorCount;
 }

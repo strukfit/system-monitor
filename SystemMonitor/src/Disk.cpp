@@ -11,8 +11,10 @@ Disk::Disk(const char diskLetter) :
     m_totalBytes(0),
     m_totalFreeBytes(0)
 {
-	//updateInfo();
+#ifdef _WIN32
     pdhInit();
+#endif
+    // Update constant info
     updateModelName();
 }
 
@@ -20,6 +22,7 @@ Disk::~Disk()
 {
 }
 
+#ifdef _WIN32
 void Disk::pdhInit()
 {
     PdhOpenQuery(NULL, NULL, &m_hQuery);
@@ -28,9 +31,12 @@ void Disk::pdhInit()
     PdhAddEnglishCounter(m_hQuery, (L"\\LogicalDisk(" + m_diskLetter + L")\\Avg. Disk sec/Transfer").c_str(), NULL, &m_responseTimeCounter);
     PdhCollectQueryData(m_hQuery);
 }
+#endif // _WIN32
+
 
 void Disk::updateInfo()
 {
+#ifdef _WIN32
     ULARGE_INTEGER freeBytesAvailable, totalNumberOfBytes, totalNumberOfFreeBytes;
     GetDiskFreeSpaceEx(m_diskLetter.c_str(), &freeBytesAvailable, &totalNumberOfBytes, &totalNumberOfFreeBytes);
 
@@ -48,16 +54,18 @@ void Disk::updateInfo()
     m_readSpeed = readSpeedVal.longValue;
     m_writeSpeed = writeSpeedVal.longValue;
     m_avgResponseTime = avgResponseTimeVal.doubleValue;
+#endif // _WIN32
 
     updateActiveTime();
 }
 
 void Disk::updateActiveTime()
 {
+#ifdef _WIN32
     std::wstring query = L"SELECT PercentDiskTime FROM Win32_PerfFormattedData_PerfDisk_LogicalDisk WHERE Name = \'" + m_diskLetter + L"\'";
     std::wstring property = L"PercentDiskTime";
     std::vector<WMIValue> results;
-    
+
     WMIManager::execQuery(query, property, results);
 
     if (results.empty())
@@ -77,15 +85,17 @@ void Disk::updateActiveTime()
             else {
                 m_activeTime = arg;
             }
-        }, result);
+            }, result);
     }
 
     if (m_activeTime > 100)
         m_activeTime = 100;
+#endif // _WIN32
 }
 
 void Disk::updateModelName()
 {
+#ifdef _WIN32
     std::wstring query = L"ASSOCIATORS OF {Win32_LogicalDisk.DeviceID='" + m_diskLetter + L"'} WHERE AssocClass=Win32_LogicalDiskToPartition";
     std::wstring property = L"DeviceId";
     std::vector<WMIValue> results;
@@ -133,7 +143,8 @@ void Disk::updateModelName()
                 m_modelName = arg;
             }
             }, result);
-    }
+    } 
+#endif // _WIN32
 }
 
 std::wstring Disk::diskLetter() const
@@ -151,12 +162,12 @@ byte Disk::activeTime() const
     return m_activeTime;
 }
 
-LONG Disk::readSpeed() const
+long Disk::readSpeed() const
 {
     return m_readSpeed;
 }
 
-LONG Disk::writeSpeed() const
+long Disk::writeSpeed() const
 {
     return m_writeSpeed;
 }
@@ -166,17 +177,17 @@ double Disk::avgResponseTime() const
     return m_avgResponseTime;
 }
 
-ULONGLONG Disk::totalUsedBytes() const
+ulonglong Disk::totalUsedBytes() const
 {
     return m_totalUsedBytes;
 }
 
-ULONGLONG Disk::totalBytes() const
+ulonglong Disk::totalBytes() const
 {
     return m_totalBytes;
 }
 
-ULONGLONG Disk::totalFreeBytes() const
+ulonglong Disk::totalFreeBytes() const
 {
     return m_totalFreeBytes;
 }

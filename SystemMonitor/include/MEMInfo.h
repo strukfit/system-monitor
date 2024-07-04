@@ -7,11 +7,11 @@
 #include <memory>
 #include "WMIManager.h"
 #pragma comment(lib, "wbemuuid.lib")
-//#else
-//#include <sys/sysinfo.h>
-//#include <fstream>
 #endif
 
+#ifdef __unix__
+
+#endif
 
 class MEMInfo
 {
@@ -27,7 +27,7 @@ public:
 	float availPageFileGB() const;
 	float totalPageFileGB() const;
 	float usedPageFileGB() const;
-	float speedMHz() const;
+	int speedMHz() const;
 
 private:
 	void updateSpeedInfo();
@@ -38,5 +38,5 @@ private:
 	float m_availPageFileGB;
 	float m_totalPageFileGB;
 	float m_usedPageFileGB;
-	DWORD m_speedMHz;
+	int m_speedMHz;
 };

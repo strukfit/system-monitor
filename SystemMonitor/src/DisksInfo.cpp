@@ -3,6 +3,7 @@
 
 DisksInfo::DisksInfo()
 {
+#ifdef _WIN32
 	DWORD drivesMask = GetLogicalDrives();
 	for (char letter = 'A'; letter <= 'Z'; ++letter)
 	{
@@ -11,6 +12,8 @@ DisksInfo::DisksInfo()
 			m_allDisks.push_back(std::make_unique<Disk>(letter));
 		drivesMask >>= 1;
 	}
+#endif // _WIN32
+
 	updateInfo();
 }
 
