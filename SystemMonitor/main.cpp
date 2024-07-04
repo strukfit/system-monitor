@@ -18,6 +18,7 @@
 #include "DisksInfo.h"
 #include "GPUsInfo.h"
 
+
 QLabel* cpuLabel;
 QLabel* memLabel;
 QLabel* diskLabel;
@@ -99,7 +100,6 @@ Q_SLOT void updateLabels()
         .arg(memInfo.speedMHz()));
 
     gpusInfo.updateInfo();
-
     QString gpuLabelText;
     for (const auto& gpu : gpusInfo.allGPUs())
     {

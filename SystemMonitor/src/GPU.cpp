@@ -26,14 +26,14 @@ GPU::GPU(QString modelName, gpu::Type type, IADLXGPUPtr adlxGpuPtr, IADLXPerform
     ADLX_RESULT res;
 
     res = m_perfMonitoringServices->GetSupportedGPUMetrics(m_AdlxGpuPtr, &m_gpuMetricsSupport);
-    if (!ADLX_SUCCEEDED(res))
+    if (ADLX_FAILED(res))
     {
         qDebug() << "Failed to get supported GPU metrics";
         return;
     }
 
     res = m_perfMonitoringServices->GetCurrentGPUMetrics(m_AdlxGpuPtr, &m_gpuMetrics);
-    if (!ADLX_SUCCEEDED(res))
+    if (ADLX_FAILED(res))
     {
         qDebug() << "Failed to get current GPU metrics";
         return;
@@ -88,7 +88,7 @@ void GPU::updateUsageAMD()
     // Check GPU usage support status
     adlx_bool supported = false;
     res = m_gpuMetricsSupport->IsSupportedGPUUsage(&supported);
-    if (!ADLX_SUCCEEDED(res))
+    if (ADLX_FAILED(res))
     {
         return;
     }
@@ -98,10 +98,10 @@ void GPU::updateUsageAMD()
         qDebug() << "GPU usage metric reporting is not supported on GPU";
         return;
     }
-
+    
     adlx_double usage;
     res = m_gpuMetrics->GPUUsage(&usage);
-    if (!ADLX_SUCCEEDED(res))
+    if (ADLX_FAILED(res))
     {
         qDebug() << "Failed to get GPU usage";
         return;
@@ -116,7 +116,7 @@ void GPU::updateMemoryAMD()
 
     adlx_uint totalVRAM;
     res = m_AdlxGpuPtr->TotalVRAM(&totalVRAM);
-    if (!ADLX_SUCCEEDED(res))
+    if (ADLX_FAILED(res))
     {
         qDebug() << "Failed to get GPU total VRAM";
         return;
@@ -127,7 +127,7 @@ void GPU::updateMemoryAMD()
     // Display GPU VRAM support status
     adlx_bool supported = false;
     res = m_gpuMetricsSupport->IsSupportedGPUVRAM(&supported);
-    if (!ADLX_SUCCEEDED(res))
+    if (ADLX_FAILED(res))
     {
         qDebug() << "GPU VRAM metric reporting is not supported on GPU";
     }
@@ -140,7 +140,7 @@ void GPU::updateMemoryAMD()
 
     adlx_int VRAM = 0;
     res = m_gpuMetrics->GPUVRAM(&VRAM);
-    if (!ADLX_SUCCEEDED(res))
+    if (ADLX_FAILED(res))
     {
         qDebug() << "Failed to get GPU VRAM";
         return;
@@ -156,7 +156,7 @@ void GPU::updateTemperatureAMD()
     // Check GPU temperature support status
     adlx_bool supported = false;
     res = m_gpuMetricsSupport->IsSupportedGPUTemperature(&supported);
-    if (!ADLX_SUCCEEDED(res))
+    if (ADLX_FAILED(res))
     {
         qDebug() << "GPU temperature metric reporting is not supported on GPU";
     }
@@ -169,7 +169,7 @@ void GPU::updateTemperatureAMD()
 
     adlx_double temperature = 0;
     res = m_gpuMetrics->GPUTemperature(&temperature);
-    if (!ADLX_SUCCEEDED(res))
+    if (ADLX_FAILED(res))
     {
         qDebug() << "Failed to get GPU temperature";
         return;

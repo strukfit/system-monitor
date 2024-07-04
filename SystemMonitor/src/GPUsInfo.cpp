@@ -19,7 +19,7 @@ GPUsInfo::~GPUsInfo()
     // Destroy ADLX
     ADLX_RESULT res = ADLX_FAIL;
     res = m_ADLXHelp.Terminate();
-    if(!ADLX_SUCCEEDED(res))
+    if(ADLX_FAILED(res))
         qDebug() << "Failed to terminate ADLX";
 }
 
@@ -86,7 +86,7 @@ void GPUsInfo::initAmdCards()
 
     // Initialize ADLX
     res = m_ADLXHelp.Initialize();
-    if (!ADLX_SUCCEEDED(res))
+    if (ADLX_FAILED(res))
     {
         qDebug() << "Failed to initialize ADLX";
         return;
@@ -95,7 +95,7 @@ void GPUsInfo::initAmdCards()
     // Get Performance Monitoring services
     IADLXPerformanceMonitoringServicesPtr perfMonitoringServices;
     res = m_ADLXHelp.GetSystemServices()->GetPerformanceMonitoringServices(&perfMonitoringServices);
-    if (!ADLX_SUCCEEDED(res))
+    if (ADLX_FAILED(res))
     {
         qDebug() << "Failed to get performance monitoring services";
         return;
@@ -104,7 +104,7 @@ void GPUsInfo::initAmdCards()
     // Get GPU list
     IADLXGPUListPtr gpus;
     res = m_ADLXHelp.GetSystemServices()->GetGPUs(&gpus);
-    if (!ADLX_SUCCEEDED(res))
+    if (ADLX_FAILED(res))
     {
         qDebug() << "Failed to get GPU list";
         return;
@@ -114,7 +114,7 @@ void GPUsInfo::initAmdCards()
     {
         IADLXGPUPtr gpu;
         res = gpus->At(it, &gpu);
-        if (!ADLX_SUCCEEDED(res))
+        if (ADLX_FAILED(res))
         {
             qDebug() << "Failed to get particular GPU";
             continue;
