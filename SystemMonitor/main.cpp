@@ -25,7 +25,7 @@ static void updateCPUAsync(CPUInfo& cpuInfo, QLabel* cpuLabel)
         "CPU_BASE_SPEED: %6 GHz\n"
         "CPU_CORES: %7\n"
         "CPU_LOGIC_PROC: %8\n")
-        .arg(QString::fromStdWString(cpuInfo.modelName()))
+        .arg(QString::fromStdString(cpuInfo.modelName()))
         .arg(cpuInfo.usage())
         .arg(cpuInfo.processCount())
         .arg(cpuInfo.threadCount())

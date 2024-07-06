@@ -9,12 +9,20 @@
 #pragma comment(lib, "pdh.lib")
 #endif // _WIN32
 
-#ifdef __unix__
+#ifdef __linux__
 //#include <sys/sysinfo.h>
-//#include <fstream>
-#endif // __unix__
+#include <fstream>
+#include <sstream>
+#include <unistd.h>
+#include <set>
+#include <filesystem>
+#endif // __linux__
 
 #include <string>
+#include <QDebug>
+
+using ulong = unsigned long;
+using ulonglong = unsigned long long;
 
 class CPUInfo
 {
@@ -24,7 +32,7 @@ public:
 
 	void updateInfo();
 
-	std::wstring modelName() const;
+	std::string modelName() const;
 
 	double usage() const;
 
@@ -32,31 +40,41 @@ public:
 	int threadCount() const;
 	int handleCount() const;
 
-	unsigned long baseSpeed() const;
-	unsigned long coreCount() const;
-	unsigned long logicalProcessorCount() const;
+	ulong baseSpeed() const;
+	ulong coreCount() const;
+	ulong logicalProcessorCount() const;
 
 private:
 #ifdef _WIN32
 	void pdhInit();
+	void updateCPUBaseSpeed();
+	void updateCPUModelName();
+	void updateCPUCoreCount();
+	void updatePDHInfo();
 
 	PDH_HQUERY m_hQuery;
 	PDH_HCOUNTER m_cpuTotal, m_processCounter, m_threadCounter, m_handleCounter;
 #endif // _WIN32
 
-	void updateCPUInfo();
-	void updateCPUCoreCount();
-	void updateCPUBaseSpeed();
-	void updateCPUModelName();
+#ifdef __linux__
+	void updateConstantVariables();
+	void updateProcessThreadHandleCount();
+	void getCPUTime(ulonglong& idleTime, ulonglong& totalTime);
+	void updateCPUUsage();
 
-	std::wstring m_modelName;
+	ulonglong m_prevIdleTime;
+	ulonglong m_prevTotalTime;
+#endif // __linux__
+
+
+	std::string m_modelName;
 	double m_usage;
 
 	int m_processCount;
 	int m_threadCount;
 	int m_handleCount;
 
-	unsigned long m_baseSpeed;
-	unsigned long m_coreCount;
-	unsigned long m_logicalProcessorCount;
+	ulong m_baseSpeed;
+	ulong m_coreCount;
+	ulong m_logicalProcessorCount;
 };

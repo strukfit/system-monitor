@@ -3,7 +3,7 @@ project(${CMAKE_PROJECT_NAME} LANGUAGES CXX)
 
 include(qt.cmake)
 
-set(CMAKE_CXX_STANDARD 23)
+set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 set(CMAKE_AUTOMOC ON)
@@ -76,10 +76,10 @@ if(WIN32)
     target_link_libraries(SystemMonitor PUBLIC ${NVML_LIBRARIES})
 endif()
 
-#set_target_properties(${CMAKE_PROJECT_NAME}
-#    PROPERTIES
-#        WIN32_EXECUTABLE TRUE
-#)
+set_target_properties(${CMAKE_PROJECT_NAME}
+    PROPERTIES
+        WIN32_EXECUTABLE TRUE
+)
 
 target_link_libraries(${CMAKE_PROJECT_NAME}
     PUBLIC
@@ -88,6 +88,8 @@ target_link_libraries(${CMAKE_PROJECT_NAME}
 )
 
 target_include_directories(${CMAKE_PROJECT_NAME} PUBLIC "include")
+
+target_link_options(${CMAKE_PROJECT_NAME} PRIVATE ${SUBSYSTEM_LINKER_OPTIONS})
 
 # Resources copy
 set(SOURCE_DIR ${CMAKE_SOURCE_DIR}/Resources)

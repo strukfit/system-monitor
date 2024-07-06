@@ -1,6 +1,10 @@
 #include "CPUInfo.h"
 
 CPUInfo::CPUInfo():
+#ifdef __unix__
+    m_prevIdleTime(0),
+    m_prevTotalTime(0),
+#endif
     m_usage(0.),
     m_processCount(0),
     m_threadCount(0),
@@ -11,11 +15,14 @@ CPUInfo::CPUInfo():
 {
 #ifdef _WIN32
     pdhInit();
-#endif // _WIN32
     // Update constant variables
     updateCPUCoreCount();
     updateCPUBaseSpeed();
     updateCPUModelName();
+#endif // _WIN32
+#ifdef __unix__
+    updateConstantVariables();
+#endif // __unix__
 }
 
 CPUInfo::~CPUInfo()
@@ -28,7 +35,13 @@ CPUInfo::~CPUInfo()
 void CPUInfo::updateInfo()
 {
     // Update inconstant variables
-    updateCPUInfo();
+#ifdef _WIN32
+    updatePDHInfo();
+#endif // _WIN32
+#ifdef __unix__
+    updateProcessThreadHandleCount();
+    updateCPUUsage();
+#endif // __unix__
 }
 
 #ifdef _WIN32
@@ -41,12 +54,9 @@ void CPUInfo::pdhInit()
     PdhAddEnglishCounter(m_hQuery, L"\\Process(_Total)\\Handle Count", NULL, &m_handleCounter);
     PdhCollectQueryData(m_hQuery);
 }
-#endif // _WIN32
 
-
-void CPUInfo::updateCPUInfo()
+void CPUInfo::updatePDHInfo()
 {
-#ifdef _WIN32
     PDH_FMT_COUNTERVALUE usageVal, processVal, threadVal, handleVal;
 
     PdhCollectQueryData(m_hQuery);
@@ -59,12 +69,10 @@ void CPUInfo::updateCPUInfo()
     m_processCount = static_cast<int>(processVal.longValue);
     m_threadCount = static_cast<int>(threadVal.longValue);
     m_handleCount = static_cast<int>(handleVal.longValue);
-#endif // _WIN32
-
 }
 
-void CPUInfo::updateCPUCoreCount() {
-#ifdef _WIN32
+void CPUInfo::updateCPUCoreCount() 
+{
     SYSTEM_INFO sysInfo;
     GetSystemInfo(&sysInfo);
 
@@ -87,11 +95,9 @@ void CPUInfo::updateCPUCoreCount() {
         info = reinterpret_cast<PSYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX>(reinterpret_cast<char*>(info) + info->Size);
     }
     m_coreCount = processorCount;
-#endif
 }
 
 void CPUInfo::updateCPUBaseSpeed() {
-#ifdef _WIN32
     HKEY hKey;
     LONG lError = RegOpenKeyEx(HKEY_LOCAL_MACHINE,
         TEXT("HARDWARE\\DESCRIPTION\\System\\CentralProcessor\\0"),
@@ -106,12 +112,10 @@ void CPUInfo::updateCPUBaseSpeed() {
         RegCloseKey(hKey);
     }
     m_baseSpeed = mhz / 1000.f;
-#endif // _WIN32
 }
 
 void CPUInfo::updateCPUModelName()
 {
-#ifdef _WIN32
     std::wstring query = L"SELECT Name FROM Win32_Processor";
     std::wstring property = L"Name";
     std::vector<WMIValue> results;
@@ -120,7 +124,7 @@ void CPUInfo::updateCPUModelName()
 
     if (results.empty())
     {
-        m_modelName = L"";
+        m_modelName = "";
         return;
     }
 
@@ -130,14 +134,125 @@ void CPUInfo::updateCPUModelName()
             using T = std::decay_t<decltype(arg)>;
             if constexpr (std::is_same_v<T, std::wstring>)
             {
-                m_modelName = arg;
+                m_modelName = std::string(arg.begin(), arg.end());
             }
         }, result);
     }
+}
 #endif
+
+#ifdef __unix__
+void CPUInfo::updateConstantVariables()
+{
+    std::ifstream file("/proc/cpuinfo");
+    std::stringstream content;
+    content << file.rdbuf();
+    file.close();
+
+    std::istringstream iss(content.str());
+    std::string line;
+    std::set<int> cores;
+    while (getline(iss, line)) {
+        // Get model name
+        if (line.find("model name") != std::string::npos)
+        {
+            m_modelName = line.substr(line.find(":") + 2);
+        }
+        // Get base speed
+        else if (line.find("cpu MHz") != std::string::npos)
+        {
+            m_baseSpeed = stod(line.substr(line.find(":") + 2));
+        }
+        // Calculate cores
+        else if (line.find("core id") != std::string::npos)
+        {
+            int coreId;
+            std::sscanf(line.c_str(), "core id\t: %d", &coreId);
+            cores.insert(coreId);
+        }
+    }
+
+    // Get cores count
+    m_coreCount = cores.size();
+
+    // Get logical processors count
+    m_logicalProcessorCount = sysconf(_SC_NPROCESSORS_CONF);
 }
 
-std::wstring CPUInfo::modelName() const
+void CPUInfo::updateProcessThreadHandleCount()
+{
+    m_processCount = 0;
+    m_threadCount = 0;
+    m_handleCount = 0;
+    for (const auto& entry : std::filesystem::directory_iterator("/proc")) {
+        if (entry.is_directory()) {
+            std::string pid = entry.path().filename().string();
+            if (std::all_of(pid.begin(), pid.end(), ::isdigit)) {
+                // Calculate proces count 
+                m_processCount++;
+
+                // Calculate thread count
+                std::ifstream status(entry.path() / "status");
+                std::string line;
+                while (std::getline(status, line)) {
+                    if (line.find("Threads:") != std::string::npos) {
+                        int threads;
+                        sscanf(line.c_str(), "Threads: %d", &threads);
+                        m_threadCount += threads;
+                        break;
+                    }
+                }
+                status.close();
+
+                // Calculate handle count
+                std::string fd_path = "/proc/" + pid + "/fd";
+                try {
+                    for (const auto& fd_entry : std::filesystem::directory_iterator(fd_path)) {
+                        m_handleCount++;
+                    }
+                }
+                catch (const std::filesystem::filesystem_error& e) {
+                    // Ignore permission errors and continue
+                    continue;
+                }
+            }
+        }
+    }
+}
+
+void CPUInfo::getCPUTime(ulonglong& idleTime, ulonglong& totalTime)
+{
+    std::ifstream file("/proc/stat");
+    std::string line;
+    std::getline(file, line);
+    file.close();
+
+    std::istringstream ss(line);
+    std::string cpu;
+    ulonglong user, nice, system, idle, iowait, irq, softirq, steal;
+
+    ss >> cpu >> user >> nice >> system >> idle >> iowait >> irq >> softirq >> steal;
+
+    totalTime = user + nice + system + idle + iowait + irq + softirq + steal;
+    idleTime = user + nice + system;
+}
+
+void CPUInfo::updateCPUUsage()
+{
+    ulonglong idleTime, totalTime;
+    getCPUTime(idleTime, totalTime);
+
+    ulonglong idleDiff = idleTime - m_prevIdleTime;
+    ulonglong totalDiff = totalTime - m_prevTotalTime;
+
+    m_usage = (static_cast<double>(idleDiff) / totalDiff) * 100.0;
+
+    m_prevIdleTime = idleTime;
+    m_prevTotalTime = totalTime;
+}
+#endif // __unix__
+
+std::string CPUInfo::modelName() const
 {
     return m_modelName;
 }
@@ -162,17 +277,17 @@ int CPUInfo::handleCount() const
     return m_handleCount;
 }
 
-unsigned long CPUInfo::baseSpeed() const
+ulong CPUInfo::baseSpeed() const
 {
     return m_baseSpeed;
 }
 
-unsigned long CPUInfo::coreCount() const
+ulong CPUInfo::coreCount() const
 {
     return m_coreCount;
 }
 
-unsigned long CPUInfo::logicalProcessorCount() const
+ulong CPUInfo::logicalProcessorCount() const
 {
     return m_logicalProcessorCount;
 }
