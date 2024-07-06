@@ -1,12 +1,12 @@
 #include "MEMInfo.h"
 
 MEMInfo::MEMInfo() :
-    m_totalGB(0.f),
-    m_availGB(0.f),
-    m_usedGB(0.f),
-    m_availPageFileGB(0.f),
-    m_totalPageFileGB(0.f),
-    m_usedPageFileGB(0.f)
+    m_total(0.f),
+    m_avail(0.f),
+    m_used(0.f),
+    m_availPageFile(0.f),
+    m_totalPageFile(0.f),
+    m_usedPageFile(0.f)
 {
 #ifdef _WIN32
     // Update constant info
@@ -25,13 +25,13 @@ void MEMInfo::updateInfo()
     memStatus.dwLength = sizeof(MEMORYSTATUSEX);
     GlobalMemoryStatusEx(&memStatus);
 
-    m_totalGB = memStatus.ullTotalPhys / 1024.f / 1024.f / 1024.f;
-    m_availGB = memStatus.ullAvailPhys / 1024.f / 1024.f / 1024.f;
-    m_usedGB = m_totalGB - m_availGB;
+    m_total = memStatus.ullTotalPhys;
+    m_avail = memStatus.ullAvailPhys;
+    m_used = m_total - m_avail;
 
-    m_availPageFileGB = memStatus.ullAvailPageFile / 1024.f / 1024.f / 1024.f;
-    m_totalPageFileGB = memStatus.ullTotalPageFile / 1024.f / 1024.f / 1024.f;
-    m_usedPageFileGB = m_totalPageFileGB - m_availPageFileGB;
+    m_availPageFile = memStatus.ullAvailPageFile;
+    m_totalPageFile = memStatus.ullTotalPageFile;
+    m_usedPageFile = m_totalPageFile - m_availPageFile;
 #endif // _WIN32
 
 #ifdef __linux__
@@ -49,14 +49,13 @@ void MEMInfo::updateInfo()
     }
     meminfo.close();
 
-    usedMemoryKb = totalMemoryKb - availableMemoryKb;
-    m_totalGB = totalMemoryKb / 1024.f / 1024.f;
-    m_availGB = availableMemoryKb / 1024.f / 1024.f;
-    m_usedGB = usedMemoryKb / 1024.f / 1024.f;
+    m_total = totalMemoryKb * 1024;
+    m_avail = availableMemoryKb * 1024;
+    m_used = totalMemoryKb - availableMemoryKb;
 
     std::ifstream swapInfo("/proc/swaps");
     line = "";
-    ulonglong totalSwap = 0, usedSwap = 0;
+    ulonglong totalSwapKb = 0, usedSwapKb = 0;
 
     while (std::getline(swapInfo, line)) {
         if (line.find("/dev") != std::string::npos) {
@@ -64,16 +63,15 @@ void MEMInfo::updateInfo()
             std::string dev, type;
             ulonglong size, used;
             iss >> dev >> type >> size >> used;
-            totalSwap += size;
-            usedSwap += used;
+            totalSwapKb += size;
+            usedSwapKb += used;
         }
     }
     swapInfo.close();
 
-    ulonglong availSwap = totalSwap - usedSwap;
-    m_totalPageFileGB = totalSwap / 1024.f / 1024.f;
-    m_usedPageFileGB = usedSwap / 1024.f / 1024.f;
-    m_availPageFileGB = availSwap / 1024.f / 1024.f;
+    m_totalPageFile = totalSwapKb * 1024;
+    m_usedPageFile = usedSwapKb * 1024;
+    m_availPageFile = m_totalPageFile - m_usedPageFile;
 #endif // __linux__
 }
 
@@ -110,34 +108,34 @@ void MEMInfo::updateSpeedInfo()
 }
 #endif // _WIN32
 
-float MEMInfo::totalGB() const
+ulonglong MEMInfo::total() const
 {
-    return m_totalGB;
+    return m_total;
 }
 
-float MEMInfo::availGB() const
+ulonglong MEMInfo::avail() const
 {
-    return m_availGB;
+    return m_avail;
 }
 
-float MEMInfo::usedGB() const
+ulonglong MEMInfo::used() const
 {
-    return m_usedGB;
+    return m_used;
 }
 
-float MEMInfo::availPageFileGB() const
+ulonglong MEMInfo::availPageFile() const
 {
-    return m_availPageFileGB;
+    return m_availPageFile;
 }
 
-float MEMInfo::totalPageFileGB() const
+ulonglong MEMInfo::totalPageFile() const
 {
-    return m_totalPageFileGB;
+    return m_totalPageFile;
 }
 
-float MEMInfo::usedPageFileGB() const
+ulonglong MEMInfo::usedPageFile() const
 {
-    return m_usedPageFileGB;
+    return m_usedPageFile;
 }
 
 #ifdef _WIN32

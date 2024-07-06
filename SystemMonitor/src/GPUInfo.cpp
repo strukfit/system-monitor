@@ -222,6 +222,10 @@ void GPUInfo::updateInfoNvidia()
     std::replace(gpuInfo.begin(), gpuInfo.end(), ',', ' ');
     std::stringstream ss(gpuInfo);
     ss >> m_usage >> m_memoryTotal >> m_memoryUsed >> m_temperature;
+
+    // Mbytes to Bytes
+    m_memoryTotal = m_memoryTotal * 1024 * 1024;
+    m_memoryUsed = m_memoryUsed * 1024 * 1024;
 }
 
 std::string GPUInfo::exec(const char* cmd)

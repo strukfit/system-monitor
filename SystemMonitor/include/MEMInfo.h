@@ -28,17 +28,16 @@ public:
 
 	void updateInfo();
 
-	float totalGB() const;
-	float availGB() const;
-	float usedGB() const;
-	float availPageFileGB() const;
-	float totalPageFileGB() const;
-	float usedPageFileGB() const;
+	ulonglong total() const;
+	ulonglong avail() const;
+	ulonglong used() const;
+	ulonglong availPageFile() const;
+	ulonglong totalPageFile() const;
+	ulonglong usedPageFile() const;
 
 #ifdef _WIN32
 	int speedMHz() const;
 #endif // _WIN32
-
 
 private:
 #ifdef __linux__
@@ -51,10 +50,10 @@ private:
 	int m_speedMHz;
 #endif // _WIN32
 
-	float m_totalGB;
-	float m_availGB;
-	float m_usedGB;
-	float m_availPageFileGB;
-	float m_totalPageFileGB;
-	float m_usedPageFileGB;
+	ulonglong m_total;
+	ulonglong m_avail;
+	ulonglong m_used;
+	ulonglong m_availPageFile;
+	ulonglong m_totalPageFile;
+	ulonglong m_usedPageFile;
 };

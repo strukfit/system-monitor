@@ -12,6 +12,34 @@
 #include "DiskInfo.h"
 #include "GPUInfo.h"
 
+std::string convertBytes(ulonglong bytes)
+{
+    const float KILOBYTE = 1024.f;
+    const float MEGABYTE = 1024.f * KILOBYTE;
+    const float GIGABYTE = 1024.f * MEGABYTE;
+    
+    std::ostringstream oss;
+    oss << std::fixed << std::setprecision(2);
+
+    if (bytes < KILOBYTE)
+    {
+        oss << bytes << " B";
+    }
+    else if (bytes < MEGABYTE)
+    {
+        oss << bytes / KILOBYTE << " Kb";
+    }
+    else if (bytes < GIGABYTE)
+    {
+        oss << bytes / MEGABYTE << " Mb";
+    }
+    else
+    {
+        oss << bytes / GIGABYTE << " Gb";
+    }
+
+    return oss.str();
+}
 
 static void updateCPUAsync(CPUInfo& cpuInfo, QLabel* cpuLabel)
 {
@@ -39,18 +67,24 @@ static void updateCPUAsync(CPUInfo& cpuInfo, QLabel* cpuLabel)
 
 static void updateMEMAsync(MEMInfo& memInfo, QLabel* memLabel)
 {
+    auto used = convertBytes(memInfo.used());
+    auto total = convertBytes(memInfo.total());
+    auto avail = convertBytes(memInfo.avail());
+
+    auto usedPageFile = convertBytes(memInfo.usedPageFile());
+    auto totalPageFile = convertBytes(memInfo.totalPageFile());
+    auto availPageFile = convertBytes(memInfo.availPageFile());
+
     memInfo.updateInfo();
     QString labelText = QString(
-        "MEM: %1/%2 GB\n"
+        "MEM: %1/%2\n"
         "MEM_AVAIL: %3\n"
-        "MEM_PAGE_FILE: %4/%5 GB\n"
+        "MEM_PAGE_FILE: %4/%5\n"
         "MEM_PAGE_FILE_AVAIL: %6\n")
-        .arg(memInfo.usedGB())
-        .arg(memInfo.totalGB())
-        .arg(memInfo.availGB())
-        .arg(memInfo.usedPageFileGB())
-        .arg(memInfo.totalPageFileGB())
-        .arg(memInfo.availPageFileGB());
+        .arg(QString::fromStdString(used)).arg(QString::fromStdString(total))
+        .arg(QString::fromStdString(avail))
+        .arg(QString::fromStdString(usedPageFile)).arg(QString::fromStdString(totalPageFile))
+        .arg(QString::fromStdString(availPageFile));
 
 #ifdef _WIN32
     labelText.append(QString("MEM_SPEED: %1 MHz\n").arg(memInfo.speedMHz()))
@@ -61,16 +95,19 @@ static void updateMEMAsync(MEMInfo& memInfo, QLabel* memLabel)
 
 static void updateGPUAsync(GPUInfo& gpuInfo, QLabel* gpuLabel)
 {
+    auto memoryUsed = convertBytes(gpuInfo.memoryUsed());
+    auto memoryTotal = convertBytes(gpuInfo.memoryTotal());
+
     gpuInfo.updateInfo();
     QString labelText = QString(
         "GPU_NAME: %1\n"
         "GPU_USAGE: %2 %\n"
-        "GPU_MEM_USAGE: %3/%4 Gb\n"
-        "GPU_TEMPERATURE: %5 C\n\n")
+        "GPU_MEM_USAGE: %3/%4\n"
+        "GPU_TEMPERATURE: %5 °C\n\n")
         .arg(gpuInfo.modelName())
-        .arg(gpuInfo.usage() / 1.f)
-        .arg(gpuInfo.memoryUsed() / 1024.f / 1024.f / 1024.f)
-        .arg(gpuInfo.memoryTotal() / 1024.f / 1024.f / 1024.f)
+        .arg(gpuInfo.usage())
+        .arg(QString::fromStdString(memoryUsed))
+        .arg(QString::fromStdString(memoryTotal))
         .arg(gpuInfo.temperature());
 
     QMetaObject::invokeMethod(gpuLabel, "setText", Qt::QueuedConnection, Q_ARG(QString, labelText));
