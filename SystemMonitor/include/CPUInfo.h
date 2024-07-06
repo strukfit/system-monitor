@@ -16,10 +16,10 @@
 #include <unistd.h>
 #include <set>
 #include <filesystem>
+#include <algorithm>
 #endif // __linux__
 
 #include <string>
-#include <QDebug>
 
 using ulong = unsigned long;
 using ulonglong = unsigned long long;

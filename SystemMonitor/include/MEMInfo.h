@@ -9,9 +9,16 @@
 #pragma comment(lib, "wbemuuid.lib")
 #endif
 
-#ifdef __unix__
+#include <QDebug>
 
-#endif
+#ifdef __linux__
+#include <fstream>
+#include <sstream>
+#include <unistd.h>
+
+using ulonglong = unsigned long long;
+#endif // __linux__
+
 
 class MEMInfo
 {
@@ -27,10 +34,22 @@ public:
 	float availPageFileGB() const;
 	float totalPageFileGB() const;
 	float usedPageFileGB() const;
+
+#ifdef _WIN32
 	int speedMHz() const;
+#endif // _WIN32
+
 
 private:
+#ifdef __linux__
+	ulonglong extractValue(const std::string& line);
+#endif // __linux__
+
+#ifdef _WIN32
 	void updateSpeedInfo();
+	
+	int m_speedMHz;
+#endif // _WIN32
 
 	float m_totalGB;
 	float m_availGB;
@@ -38,5 +57,4 @@ private:
 	float m_availPageFileGB;
 	float m_totalPageFileGB;
 	float m_usedPageFileGB;
-	int m_speedMHz;
 };

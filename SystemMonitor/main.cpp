@@ -44,15 +44,17 @@ static void updateMEMAsync(MEMInfo& memInfo, QLabel* memLabel)
         "MEM: %1/%2 GB\n"
         "MEM_AVAIL: %3\n"
         "MEM_PAGE_FILE: %4/%5 GB\n"
-        "MEM_PAGE_FILE_AVAIL: %6\n"
-        "MEM_SPEED: %7 MHz")
+        "MEM_PAGE_FILE_AVAIL: %6\n")
         .arg(memInfo.usedGB())
         .arg(memInfo.totalGB())
         .arg(memInfo.availGB())
         .arg(memInfo.usedPageFileGB())
         .arg(memInfo.totalPageFileGB())
-        .arg(memInfo.availPageFileGB())
-        .arg(memInfo.speedMHz());
+        .arg(memInfo.availPageFileGB());
+
+#ifdef _WIN32
+    labelText.append(QString("MEM_SPEED: %1 MHz\n").arg(memInfo.speedMHz()))
+#endif // _WIN32
 
     QMetaObject::invokeMethod(memLabel, "setText", Qt::QueuedConnection, Q_ARG(QString, labelText));
 }
