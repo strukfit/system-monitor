@@ -180,6 +180,25 @@ void initNvidiaCards()
         allGPUs.push_back(GPUInfo(static_cast<QString>(name), gpu::NVIDIA, device));
     }
 #endif // _WIN32
+    
+#ifdef __linux__
+    FILE* fp;
+    char index[1035];
+
+    // Open the command for reading.
+    fp = popen("nvidia-smi --query-gpu=index --format=csv,noheader", "r");
+    if (fp == NULL) {
+        printf("Failed to run command\n");
+        exit(1);
+    }
+
+    // Read the output a line at a time - each line should contain one GPU index. 
+    while (fgets(index, sizeof(index) - 1, fp) != NULL) {
+        // Extract the GPU index from the line. 
+        allGPUs.push_back(GPUInfo(index, gpu::NVIDIA));
+    }
+    pclose(fp);
+#endif // __linux__
 }
 
 void initAmdCards()

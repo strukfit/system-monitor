@@ -1,13 +1,22 @@
 #pragma once
 
+#include <QString>
+#include <QDebug>
+
 #ifdef _WIN32
 #include <nvml.h>
 #include "SDK/ADLXHelper/Windows/Cpp/ADLXHelper.h"
 #include "SDK/Include/IPerformanceMonitoring.h"  
+
+using namespace adlx;
 #endif // _WIN32
 
-#include <QString>
-#include <QDebug>
+#ifdef __linux__
+#include <sstream>
+#endif // __linux__
+
+using ulonglong = unsigned long long;
+using uint = unsigned int;
 
 namespace gpu
 {
@@ -19,10 +28,6 @@ namespace gpu
 	};
 }
 
-#ifdef _WIN32
-using namespace adlx;
-#endif // _WIN32
-
 class GPUInfo
 {
 public:
@@ -31,16 +36,19 @@ public:
 	GPUInfo(QString modelName, gpu::Type type, IADLXGPUPtr adlxGpuPtr, IADLXPerformanceMonitoringServicesPtr perfMonitoringServices);
 #endif // _WIN32
 
-	GPUInfo();
+#ifdef __linux__
+	GPUInfo(std::string index, gpu::Type type);
+#endif // __linux__
+
 	~GPUInfo();
 
 	void updateInfo();
 
 	QString modelName() const;
-	unsigned int usage() const;
-	unsigned long long memoryUsed() const;
-	unsigned long long memoryTotal() const;
-	unsigned int temperature() const;
+	uint usage() const;
+	ulonglong memoryUsed() const;
+	ulonglong memoryTotal() const;
+	uint temperature() const;
 
 private:
 	void updateUsageNvidia();
@@ -60,12 +68,20 @@ private:
 	IADLXGPUMetricsPtr m_gpuMetrics;
 #endif // _WIN32
 
+#ifdef __linux__
+	void updateModelName();
+	void updateInfoNvidia();
+	std::string exec(const char* cmd);
+
+	std::string m_index;
+#endif // __linux__
+
 	QString m_modelName;
 
 	gpu::Type m_type;
 
-	unsigned int m_usage;
-	unsigned long long m_memoryUsed;
-	unsigned long long m_memoryTotal;
-	unsigned int m_temperature;
+	uint m_usage;
+	ulonglong m_memoryUsed;
+	ulonglong m_memoryTotal;
+	uint m_temperature;
 };

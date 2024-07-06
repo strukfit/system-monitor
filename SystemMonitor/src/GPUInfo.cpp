@@ -42,17 +42,28 @@ GPUInfo::GPUInfo(QString modelName, gpu::Type type, IADLXGPUPtr adlxGpuPtr, IADL
 }
 #endif // _WIN32
 
-GPUInfo::GPUInfo()
+#ifdef __linux__
+GPUInfo::GPUInfo(std::string index, gpu::Type type) :
+    m_index(index),
+    m_modelName(""),
+    m_type(type),
+    m_usage(0),
+    m_memoryUsed(0),
+    m_memoryTotal(0),
+    m_temperature(0)
 {
+    // Update constant variables
+    updateModelName();
 }
+#endif // __linux__
 
 GPUInfo::~GPUInfo()
 {
 }
 
+#ifdef _WIN32
 void GPUInfo::updateUsageNvidia()
 {
-#ifdef _WIN32
     nvmlReturn_t result;
 
     nvmlUtilization_t utilization;
@@ -62,12 +73,12 @@ void GPUInfo::updateUsageNvidia()
         return;
     }
     m_usage = utilization.gpu;
-#endif // _WIN32
 }
+#endif // _WIN32
 
+#ifdef _WIN32
 void GPUInfo::updateMemoryNvidia()
 {
-#ifdef _WIN32
     nvmlReturn_t result;
 
     nvmlMemory_t memory;
@@ -78,20 +89,20 @@ void GPUInfo::updateMemoryNvidia()
     }
     m_memoryUsed = memory.used;
     m_memoryTotal = memory.total;
-#endif // _WIN32
 }
+#endif // _WIN32
 
+#ifdef _WIN32
 void GPUInfo::updateTemperatureNvidia()
 {
-#ifdef _WIN32
     nvmlReturn_t result;
     result = nvmlDeviceGetTemperature(m_nvmlDevice, NVML_TEMPERATURE_GPU, &m_temperature);
     if (result != NVML_SUCCESS) {
         qDebug() << "Failed to get temperature info: " << nvmlErrorString(result);
         return;
     }
-#endif // _WIN32
 }
+#endif // _WIN32
 
 void GPUInfo::updateUsageAMD()
 {
@@ -194,17 +205,54 @@ void GPUInfo::updateTemperatureAMD()
 
     m_temperature = static_cast<unsigned int>(temperature);
 #endif // _WIN32
-
 }
+
+#ifdef __linux__
+void GPUInfo::updateModelName()
+{
+    // Get GPU model name
+    std::string modelNameStr = exec(("nvidia-smi --query-gpu=name --format=csv,noheader --id=" + m_index).c_str());
+    m_modelName = QString::fromStdString(modelNameStr);
+}
+
+void GPUInfo::updateInfoNvidia()
+{
+    std::string gpuInfo = exec(("nvidia-smi --query-gpu=utilization.gpu,memory.total,memory.used,temperature.gpu --format=csv,noheader,nounits --id=" + m_index).c_str());
+    
+    std::replace(gpuInfo.begin(), gpuInfo.end(), ',', ' ');
+    std::stringstream ss(gpuInfo);
+    ss >> m_usage >> m_memoryTotal >> m_memoryUsed >> m_temperature;
+}
+
+std::string GPUInfo::exec(const char* cmd)
+{
+    char buffer[128];
+    std::string result = "";
+    FILE* pipe = popen(cmd, "r");
+    if (!pipe) throw std::runtime_error("popen() failed!");
+    while (fgets(buffer, sizeof(buffer), pipe) != nullptr) {
+        result += buffer;
+    }
+    pclose(pipe);
+    return result;
+}
+#endif // __linux__
+
 
 void GPUInfo::updateInfo()
 {
     switch (m_type)
     {
     case gpu::NVIDIA:
+#ifdef _WIN32
         updateUsageNvidia();
         updateMemoryNvidia();
         updateTemperatureNvidia();
+#endif // _WIN32
+
+#ifdef __linux__
+        updateInfoNvidia();
+#endif // __linux__
         break;
     case gpu::AMD:
         updateUsageAMD();
@@ -221,22 +269,22 @@ QString GPUInfo::modelName() const
     return m_modelName;
 }
 
-unsigned int GPUInfo::usage() const
+uint GPUInfo::usage() const
 {
     return m_usage;
 }
 
-unsigned long long GPUInfo::memoryUsed() const
+ulonglong GPUInfo::memoryUsed() const
 {
     return m_memoryUsed;
 }
 
-unsigned long long GPUInfo::memoryTotal() const
+ulonglong GPUInfo::memoryTotal() const
 {
     return m_memoryTotal;
 }
 
-unsigned int GPUInfo::temperature() const
+uint GPUInfo::temperature() const
 {
     return m_temperature;
 }
