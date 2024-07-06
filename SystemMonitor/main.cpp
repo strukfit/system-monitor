@@ -5,19 +5,7 @@
 #include <QTimer>
 #include <QProcess>
 
-#include <memory>
 #include <thread>
-#include <ranges>
-
-#ifdef _WIN32
-#include <windows.h>
-#include "WMIManager.h"
-#endif // _WIN32
-
-#ifdef __unix__
-
-#endif // __unix__
-
 
 #include "CPUInfo.h"
 #include "MEMInfo.h"
@@ -69,37 +57,26 @@ static void updateMEMAsync(MEMInfo& memInfo, QLabel* memLabel)
     QMetaObject::invokeMethod(memLabel, "setText", Qt::QueuedConnection, Q_ARG(QString, labelText));
 }
 
-static void updateGPUAsync(std::unique_ptr<GPUInfo>& gpuInfo, QLabel* gpuLabel)
+static void updateGPUAsync(GPUInfo& gpuInfo, QLabel* gpuLabel)
 {
-    gpuInfo->updateInfo();
+    gpuInfo.updateInfo();
     QString labelText = QString(
         "GPU_NAME: %1\n"
         "GPU_USAGE: %2 %\n"
         "GPU_MEM_USAGE: %3/%4 Gb\n"
         "GPU_TEMPERATURE: %5 C\n\n")
-        .arg(gpuInfo->modelName())
-        .arg(gpuInfo->usage() / 1.f)
-        .arg(gpuInfo->memoryUsed() / 1024.f / 1024.f / 1024.f)
-        .arg(gpuInfo->memoryTotal() / 1024.f / 1024.f / 1024.f)
-        .arg(gpuInfo->temperature());
+        .arg(gpuInfo.modelName())
+        .arg(gpuInfo.usage() / 1.f)
+        .arg(gpuInfo.memoryUsed() / 1024.f / 1024.f / 1024.f)
+        .arg(gpuInfo.memoryTotal() / 1024.f / 1024.f / 1024.f)
+        .arg(gpuInfo.temperature());
 
     QMetaObject::invokeMethod(gpuLabel, "setText", Qt::QueuedConnection, Q_ARG(QString, labelText));
 }
 
-//std::vector<std::future<void>> futures;
-//for (auto& disk : m_allDisks)
-//{
-//    futures.emplace_back(std::async(std::launch::async, [&disk]() {
-//        disk->updateInfo();
-//        }));
-//}
-//
-//for (auto& future : futures)
-//future.get();
-
-static void updateDiskAsync(std::unique_ptr<DiskInfo>& diskInfo, QLabel* diskLabel)
+static void updateDiskAsync(DiskInfo& diskInfo, QLabel* diskLabel)
 {
-    diskInfo->updateInfo();
+    diskInfo.updateInfo();
     QString labelText = QString(
         "DISK: %1\n"
         "DISK_NAME: %2\n"
@@ -109,15 +86,15 @@ static void updateDiskAsync(std::unique_ptr<DiskInfo>& diskInfo, QLabel* diskLab
         "DISK_READ_SPEED: %7 Mb/s\n"
         "DISK_WRITE_SPEED: %8 Mb/s\n"
         "DISK_AVG_RESPONSE_TIME: %9 ms\n\n")
-        .arg(QString::fromStdWString(diskInfo->diskLetter()))
-        .arg(QString::fromStdWString(diskInfo->modelName()))
-        .arg(diskInfo->activeTime())
-        .arg(diskInfo->totalUsedBytes() / 1024.f / 1024.f / 1024.f)
-        .arg(diskInfo->totalBytes() / 1024.f / 1024.f / 1024.f)
-        .arg(diskInfo->totalFreeBytes() / 1024.f / 1024.f / 1024.f)
-        .arg(diskInfo->readSpeed() / 1024.f / 1024.f)
-        .arg(diskInfo->writeSpeed() / 1024.f / 1024.f)
-        .arg(diskInfo->avgResponseTime() * 1000.f);
+        .arg(QString::fromStdWString(diskInfo.diskLetter()))
+        .arg(QString::fromStdWString(diskInfo.modelName()))
+        .arg(diskInfo.activeTime())
+        .arg(diskInfo.totalUsedBytes() / 1024.f / 1024.f / 1024.f)
+        .arg(diskInfo.totalBytes() / 1024.f / 1024.f / 1024.f)
+        .arg(diskInfo.totalFreeBytes() / 1024.f / 1024.f / 1024.f)
+        .arg(diskInfo.readSpeed() / 1024.f / 1024.f)
+        .arg(diskInfo.writeSpeed() / 1024.f / 1024.f)
+        .arg(diskInfo.avgResponseTime() * 1000.f);
 
     QMetaObject::invokeMethod(diskLabel, "setText", Qt::QueuedConnection, Q_ARG(QString, labelText));
 }
@@ -132,14 +109,14 @@ QLabel* memLabel;
 CPUInfo cpuInfo;
 MEMInfo memInfo;
 
-std::vector<std::unique_ptr<DiskInfo>> allDisks;
+std::vector<DiskInfo> allDisks;
 std::vector<QLabel*> allDisksLabels;
 
 #ifdef _WIN32
 static ADLXHelper m_ADLXHelp;
 #endif // _WIN32
 
-std::vector<std::unique_ptr<GPUInfo>> allGPUs;
+std::vector<GPUInfo> allGPUs;
 std::vector<QLabel*> allGPUsLabels;
 
 void initDisks()
@@ -150,7 +127,7 @@ void initDisks()
     {
         // If the bit is set, the disk exists
         if (drivesMask & 1)
-            allDisks.push_back(std::make_unique<DiskInfo>(letter));
+            allDisks.push_back(DiskInfo(letter));
         
         drivesMask >>= 1;
     }
@@ -198,7 +175,7 @@ void initNvidiaCards()
             continue;
         }
 
-        allGPUs.push_back(std::make_unique<GPUInfo>(static_cast<QString>(name), gpu::NVIDIA, device));
+        allGPUs.push_back(GPUInfo(static_cast<QString>(name), gpu::NVIDIA, device));
     }
 #endif // _WIN32
 }
@@ -247,7 +224,7 @@ void initAmdCards()
         const char* gpuName = nullptr;
         gpu->Name(&gpuName);
 
-        allGPUs.push_back(std::make_unique<GPUInfo>(static_cast<QString>(gpuName), gpu::AMD, gpu, perfMonitoringServices));
+        allGPUs.push_back(GPUInfo(static_cast<QString>(gpuName), gpu::AMD, gpu, perfMonitoringServices));
     }
 #endif // _WIN32
 }
@@ -277,15 +254,19 @@ Q_SLOT void updateLabels()
     std::thread updateMEMThread(updateMEMAsync, std::ref(memInfo), memLabel);
     updateMEMThread.detach();
 
-    for (auto [gpu, label] : std::ranges::views::zip(allGPUs, allGPUsLabels))
+    auto iGPU = allGPUs.begin();
+    auto iGPULabel = allGPUsLabels.begin();
+    for (; iGPU < allGPUs.end(); iGPU++, iGPULabel++)
     {
-        std::thread updateGPUThread(updateGPUAsync, std::ref(gpu), label);
+        std::thread updateGPUThread(updateGPUAsync, std::ref(*iGPU), *iGPULabel);
         updateGPUThread.detach();
     }
 
-    for (auto [disk, label] : std::ranges::views::zip(allDisks, allDisksLabels))
+    auto iDisk = allDisks.begin();
+    auto iDiskLabel = allDisksLabels.begin();
+    for (; iDisk < allDisks.end(); iDisk++, iDiskLabel++)
     {
-        std::thread updateDiskThread(updateDiskAsync, std::ref(disk), label);
+        std::thread updateDiskThread(updateDiskAsync, std::ref(*iDisk), *iDiskLabel);
         updateDiskThread.detach();
     }
 }
