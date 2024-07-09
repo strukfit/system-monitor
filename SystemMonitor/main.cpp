@@ -103,7 +103,7 @@ static void updateGPUAsync(GPUInfo& gpuInfo, QLabel* gpuLabel)
         "GPU_NAME: %1\n"
         "GPU_USAGE: %2 %\n"
         "GPU_MEM_USAGE: %3/%4\n"
-        "GPU_TEMPERATURE: %5 °C\n\n")
+        "GPU_TEMPERATURE: %5 C\n\n")
         .arg(gpuInfo.modelName())
         .arg(gpuInfo.usage())
         .arg(QString::fromStdString(memoryUsed))
@@ -120,20 +120,26 @@ static void updateDiskAsync(DiskInfo& diskInfo, QLabel* diskLabel)
         "DISK: %1\n"
         "DISK_NAME: %2\n"
         "DISK_ACTIVE_TIME: %3 %\n"
-        "DISK_USAGE: %4/%5 Gb\n"
-        "DISK_FREE_SPACE: %6 Gb\n"
-        "DISK_READ_SPEED: %7 Mb/s\n"
-        "DISK_WRITE_SPEED: %8 Mb/s\n"
+        "DISK_USAGE: %4/%5\n"
+        "DISK_FREE_SPACE: %6\n"
+        "DISK_READ_SPEED: %7/s\n"
+        "DISK_WRITE_SPEED: %8/s\n"
         "DISK_AVG_RESPONSE_TIME: %9 ms\n\n")
+#ifdef WIN32
         .arg(QString::fromStdWString(diskInfo.diskLetter()))
+#elif __linux__
+        .arg(QString::fromStdString(diskInfo.device()))
+#else
+        .arg("");
+#endif 
         .arg(QString::fromStdWString(diskInfo.modelName()))
         .arg(diskInfo.activeTime())
-        .arg(diskInfo.totalUsedBytes() / 1024.f / 1024.f / 1024.f)
-        .arg(diskInfo.totalBytes() / 1024.f / 1024.f / 1024.f)
-        .arg(diskInfo.totalFreeBytes() / 1024.f / 1024.f / 1024.f)
-        .arg(diskInfo.readSpeed() / 1024.f / 1024.f)
-        .arg(diskInfo.writeSpeed() / 1024.f / 1024.f)
-        .arg(diskInfo.avgResponseTime() * 1000.f);
+        .arg(QString::fromStdString(convertBytes(diskInfo.totalUsedBytes())))
+        .arg(QString::fromStdString(convertBytes(diskInfo.totalBytes())))
+        .arg(QString::fromStdString(convertBytes(diskInfo.totalFreeBytes())))
+        .arg(QString::fromStdString(convertBytes(diskInfo.readSpeed())))
+        .arg(QString::fromStdString(convertBytes(diskInfo.writeSpeed())))
+        .arg(diskInfo.avgResponseTime());
 
     QMetaObject::invokeMethod(diskLabel, "setText", Qt::QueuedConnection, Q_ARG(QString, labelText));
 }
@@ -141,6 +147,8 @@ static void updateDiskAsync(DiskInfo& diskInfo, QLabel* diskLabel)
 #ifdef _WIN32
 WMIManager wmiManager;
 #endif
+
+int updateIntervalMs = 1000;
 
 QLabel* cpuLabel;
 QLabel* memLabel;
@@ -171,6 +179,52 @@ void initDisks()
         drivesMask >>= 1;
     }
 #endif // _WIN32
+
+#ifdef __linux__
+  
+    //FILE* fp;
+    //char* kname[1035]
+    
+    // Open the command for reading.
+    //fp = popen("lsblk -io KNAME --noheadings", "r");
+    //if (fp == NULL) {
+    //    printf("Failed to run command\n");
+    //    return;
+    //}
+
+    //while (fgets(kname, sizeof(kname) - 2, fp) != NULL) {
+    //    // Extract the disk kname from the line. 
+    //    kname[strcspn(kname, "\n")] = 0;
+
+    //    if(strstr(kname, "sd") != nullptr)
+    //        allDisks.push_back(DiskInfo(kname));
+    //}
+    //pclose(fp);
+
+    FILE* fp;
+    char line[1024];
+    fp = popen("df -h | grep /dev/", "r");
+    if (fp == NULL) {
+        printf("Failed to run command\n");
+        return;
+    }
+
+    while (fgets(line, sizeof(line) - 2, fp) != NULL) {
+        // Extract the disk device name from the line. 
+        std::istringstream iss(line);
+        std::string device;
+        iss >> device;
+
+        if (device.find("sd") == std::string::npos)
+            continue;
+
+        if (device.substr(0, 5) == "/dev/") 
+            device = device.substr(5);
+
+        allDisks.push_back(DiskInfo(device));
+    }
+    pclose(fp);
+#endif // __linux__
 }
 
 void initNvidiaCards()
@@ -226,7 +280,7 @@ void initNvidiaCards()
     fp = popen("nvidia-smi --query-gpu=index --format=csv,noheader", "r");
     if (fp == NULL) {
         printf("Failed to run command\n");
-        exit(1);
+        return;
     }
 
     // Read the output a line at a time - each line should contain one GPU index. 
@@ -354,6 +408,10 @@ int main(int argc, char** argv)
         layout->addWidget(gpuLabel);
         allGPUsLabels.push_back(gpuLabel);
     }
+    
+#ifdef __linux__
+    DiskInfo::setUpdateInterval(updateIntervalMs / 1000);
+#endif // __linux__
 
     initDisks();
 
@@ -368,7 +426,7 @@ int main(int argc, char** argv)
 
     auto timer = new QTimer(centralWidget);
     QObject::connect(timer, &QTimer::timeout, &updateLabels);
-    timer->start(1000);
+    timer->start(updateIntervalMs);
 
     window->setCentralWidget(centralWidget);
     window->show();

@@ -1,5 +1,6 @@
 #include "DiskInfo.h"
 
+#ifdef _WIN32
 DiskInfo::DiskInfo(const char diskLetter) :
     m_diskLetter({ static_cast<wchar_t>(diskLetter), ':' }),
     m_modelName(L""),
@@ -11,12 +12,36 @@ DiskInfo::DiskInfo(const char diskLetter) :
     m_totalBytes(0),
     m_totalFreeBytes(0)
 {
-#ifdef _WIN32
     pdhInit();
-#endif
     // Update constant info
     updateModelName();
 }
+#endif
+
+#ifdef __linux__
+uint DiskInfo::m_updateIntervalS = 1;
+
+DiskInfo::DiskInfo(std::string device):
+    m_device(device),
+    m_modelName(L""),
+    m_activeTime(0),
+    m_readSpeed(0.f),
+    m_writeSpeed(0.f),
+    m_avgResponseTime(0.f),
+    m_totalUsedBytes(0),
+    m_totalBytes(0),
+    m_totalFreeBytes(0),
+    m_prevSectorsRead(0),
+    m_prevSectorsWritten(0)
+{
+    updateModelName();
+}
+
+void DiskInfo::setUpdateInterval(int seconds)
+{
+    m_updateIntervalS = static_cast<uint>(seconds);
+}
+#endif // __linux__
 
 DiskInfo::~DiskInfo()
 {
@@ -32,7 +57,6 @@ void DiskInfo::pdhInit()
     PdhCollectQueryData(m_hQuery);
 }
 #endif // _WIN32
-
 
 void DiskInfo::updateInfo()
 {
@@ -54,14 +78,70 @@ void DiskInfo::updateInfo()
     m_readSpeed = readSpeedVal.longValue;
     m_writeSpeed = writeSpeedVal.longValue;
     m_avgResponseTime = avgResponseTimeVal.doubleValue;
-#endif // _WIN32
 
     updateActiveTime();
+#endif // _WIN32
+
+#ifdef __linux__
+    std::ifstream file("/proc/diskstats");
+    std::string line;
+
+    ulonglong readsCompleted, readsMerged, sectorsRead, msReading, writesCompleted, writesMerged, sectorsWritten, msWriting, iOsInProgress, msIOs, weightedMsIo;
+
+    while (std::getline(file, line)) {
+        std::istringstream iss(line);
+        std::string dev;
+        std::string device;
+        iss >> dev >> dev >> device;
+        if (device == m_device) {
+            iss >> readsCompleted >> readsMerged >> sectorsRead >> msReading
+                >> writesCompleted >> writesMerged >> sectorsWritten >> msWriting
+                >> iOsInProgress >> msIOs >> weightedMsIo;
+            break;
+        }
+    }
+    file.close();
+
+    m_readSpeed = (sectorsRead - m_prevSectorsRead) * 512 / m_updateIntervalS;
+    m_writeSpeed = (sectorsWritten - m_prevSectorsWritten) * 512 / m_updateIntervalS;
+
+    ulonglong total = (sectorsRead - m_prevSectorsRead) + (sectorsWritten - m_prevSectorsWritten);
+    ulonglong totalOld = m_prevSectorsRead + m_prevSectorsWritten;
+
+    if(totalOld == 0)
+        m_activeTime = (static_cast<double>(total) / totalOld) * 100.0;
+
+    m_prevSectorsRead = sectorsRead;
+    m_prevSectorsWritten = sectorsWritten;
+
+    m_avgResponseTime = weightedMsIo / static_cast<double>(readsCompleted + writesCompleted);
+
+    FILE* fp;
+    char buffer[1024];
+    std::string cmd = "df -k | grep /dev/" + m_device;
+    fp = popen(cmd.c_str(), "r");
+    if (fp == NULL) {
+        printf("Failed to run command\n");
+        return;
+    }
+
+    while (fgets(buffer, sizeof(buffer) - 2, fp) != NULL) {
+        // Extract the disk device name from the line. 
+        std::istringstream iss(buffer);
+        std::string device;
+        iss >> device >> m_totalBytes >> m_totalUsedBytes >> m_totalFreeBytes;
+    }
+    pclose(fp);
+
+    m_totalBytes *= 1024;
+    m_totalUsedBytes *= 1024;
+    m_totalFreeBytes = m_totalBytes - m_totalUsedBytes;
+#endif // __linux__
 }
 
+#ifdef _WIN32
 void DiskInfo::updateActiveTime()
 {
-#ifdef _WIN32
     std::wstring query = L"SELECT PercentDiskTime FROM Win32_PerfFormattedData_PerfDisk_LogicalDisk WHERE Name = \'" + m_diskLetter + L"\'";
     std::wstring property = L"PercentDiskTime";
     std::vector<WMIValue> results;
@@ -90,8 +170,8 @@ void DiskInfo::updateActiveTime()
 
     if (m_activeTime > 100)
         m_activeTime = 100;
-#endif // _WIN32
 }
+#endif // _WIN32
 
 void DiskInfo::updateModelName()
 {
@@ -145,12 +225,36 @@ void DiskInfo::updateModelName()
             }, result);
     } 
 #endif // _WIN32
+
+#ifdef __linux__
+    std::string path = "/sys/class/block/" + m_device + "/device/model";
+    std::ifstream file(path);
+    if (!file) {
+        qDebug() << "Failed to open " << QString::fromStdString(path);
+        return;
+    }
+
+    std::string model;
+    std::getline(file, model);
+    m_modelName = std::wstring(model.begin(), model.end());
+#endif // __linux__
+
 }
 
+#ifdef WIN32
 std::wstring DiskInfo::diskLetter() const
 {
     return m_diskLetter;
 }
+#endif // WIN32
+
+#ifdef __linux__
+std::string DiskInfo::device() const
+{
+    return m_device;
+}
+#endif // __linux__
+
 
 std::wstring DiskInfo::modelName() const
 {
@@ -162,12 +266,12 @@ byte DiskInfo::activeTime() const
     return m_activeTime;
 }
 
-long DiskInfo::readSpeed() const
+ulonglong DiskInfo::readSpeed() const
 {
     return m_readSpeed;
 }
 
-long DiskInfo::writeSpeed() const
+ulonglong DiskInfo::writeSpeed() const
 {
     return m_writeSpeed;
 }
