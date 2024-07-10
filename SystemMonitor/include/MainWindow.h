@@ -3,7 +3,7 @@
 #include <QLabel>
 #include <QVBoxLayout>
 #include <QTimer>
-#include <QProcess>
+#include <QScrollArea>
 
 #include <thread>
 #include <sstream>
@@ -13,6 +13,8 @@
 #include "Info/MEMInfo.h"
 #include "Info/DiskInfo.h"
 #include "Info/GPUInfo.h"
+
+#include "CustomScrollBar.h"
 
 class MainWindow : public QMainWindow
 {

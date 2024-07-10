@@ -10,22 +10,40 @@ MainWindow::MainWindow(QWidget* parent):
 	memInfo()
 {
     auto centralWidget = new QWidget(this);
-
+    centralWidget->setStyleSheet("background-color: #272727;");
     auto layout = new QVBoxLayout(centralWidget);
 
-    cpuLabel = new QLabel(nullptr, centralWidget);
-    layout->addWidget(cpuLabel);
+    auto childWidget = new QWidget(centralWidget);
+    childWidget->setContentsMargins(0, 0, 0, 0);
 
-    memLabel = new QLabel(nullptr, centralWidget);
-    layout->addWidget(memLabel);
+    auto childLayout = new QVBoxLayout(childWidget);
+    childLayout->setContentsMargins(0, 0, 0, 0);
+
+    auto scrollArea = new QScrollArea(childWidget);
+    auto scrollBar = new CustomScrollBar(childWidget);
+    scrollBar->setSingleStep(5);
+    scrollArea->setVerticalScrollBar(scrollBar);
+    scrollArea->setStyleSheet("border: 0;");
+    scrollArea->setWidgetResizable(true);
+    scrollArea->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+
+    QWidget* scrollAreaWidgetContents = new QWidget();
+
+    auto labelsLayout = new QVBoxLayout(scrollAreaWidgetContents);
+
+    cpuLabel = new QLabel(nullptr, childWidget);
+    memLabel = new QLabel(nullptr, childWidget);
+
+    labelsLayout->addWidget(cpuLabel);
+    labelsLayout->addWidget(memLabel);
 
     initNvidiaCards();
     initAmdCards();
 
     for (int i = 0; i < allGPUs.size(); i++)
     {
-        auto gpuLabel = new QLabel(NULL, centralWidget);
-        layout->addWidget(gpuLabel);
+        auto gpuLabel = new QLabel(NULL, childWidget);
+        labelsLayout->addWidget(gpuLabel);
         allGPUsLabels.push_back(gpuLabel);
     }
 
@@ -37,10 +55,16 @@ MainWindow::MainWindow(QWidget* parent):
 
     for (int i = 0; i < allDisks.size(); i++)
     {
-        auto diskLabel = new QLabel(NULL, centralWidget);
-        layout->addWidget(diskLabel);
+        auto diskLabel = new QLabel(NULL, childWidget);
+        labelsLayout->addWidget(diskLabel);
         allDisksLabels.push_back(diskLabel);
     }
+
+    scrollArea->setWidget(scrollAreaWidgetContents);
+
+    childLayout->addWidget(scrollArea);
+
+    layout->addWidget(childWidget);
 
     updateLabels();
 
