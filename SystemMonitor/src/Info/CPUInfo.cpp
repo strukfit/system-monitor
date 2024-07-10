@@ -1,4 +1,4 @@
-#include "CPUInfo.h"
+#include "Info/CPUInfo.h"
 
 CPUInfo::CPUInfo():
 #ifdef __unix__

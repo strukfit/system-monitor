@@ -1,4 +1,4 @@
-#include "DiskInfo.h"
+#include "Info/DiskInfo.h"
 
 #ifdef _WIN32
 DiskInfo::DiskInfo(const char diskLetter) :

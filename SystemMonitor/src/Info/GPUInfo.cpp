@@ -1,4 +1,4 @@
-#include "GPUInfo.h"
+#include "Info/GPUInfo.h"
 
 #ifdef _WIN32
 GPUInfo::GPUInfo(QString modelName, gpu::Type type, nvmlDevice_t nvmlDevice) :

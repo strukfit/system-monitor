@@ -76,10 +76,10 @@ if(WIN32)
     target_link_libraries(SystemMonitor PUBLIC ${NVML_LIBRARIES})
 endif()
 
-set_target_properties(${CMAKE_PROJECT_NAME}
-    PROPERTIES
-        WIN32_EXECUTABLE TRUE
-)
+#set_target_properties(${CMAKE_PROJECT_NAME}
+#    PROPERTIES
+#        WIN32_EXECUTABLE TRUE
+#)
 
 target_link_libraries(${CMAKE_PROJECT_NAME}
     PUBLIC

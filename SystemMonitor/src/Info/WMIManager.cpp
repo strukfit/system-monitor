@@ -1,4 +1,4 @@
-#include "WMIManager.h"
+#include "Info/WMIManager.h"
 
 #ifdef _WIN32
 

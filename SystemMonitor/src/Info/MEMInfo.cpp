@@ -1,4 +1,4 @@
-#include "MEMInfo.h"
+#include "Info/MEMInfo.h"
 
 MEMInfo::MEMInfo() :
     m_total(0.f),
