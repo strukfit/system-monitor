@@ -6,6 +6,8 @@
 #include <QProcess>
 
 #include <thread>
+#include <sstream>
+#include <iomanip>
 
 #include "CPUInfo.h"
 #include "MEMInfo.h"
@@ -87,7 +89,7 @@ static void updateMEMAsync(MEMInfo& memInfo, QLabel* memLabel)
         .arg(QString::fromStdString(availPageFile));
 
 #ifdef _WIN32
-    labelText.append(QString("MEM_SPEED: %1 MHz\n").arg(memInfo.speedMHz()))
+    labelText.append(QString("MEM_SPEED: %1 MHz\n").arg(memInfo.speedMHz()));
 #endif // _WIN32
 
     QMetaObject::invokeMethod(memLabel, "setText", Qt::QueuedConnection, Q_ARG(QString, labelText));

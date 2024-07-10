@@ -15,10 +15,9 @@
 #include <fstream>
 #include <sstream>
 #include <unistd.h>
-
-using ulonglong = unsigned long long;
 #endif // __linux__
 
+using ulonglong = unsigned long long;
 
 class MEMInfo
 {
