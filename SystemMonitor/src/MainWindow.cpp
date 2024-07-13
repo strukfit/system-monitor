@@ -1,6 +1,7 @@
 #include "MainWindow.h"
 
 CustomChartView* MainWindow::usageChartView;
+DiskChartView* MainWindow::diskChartView;
 
 MainWindow::MainWindow(QWidget* parent) :
     QMainWindow(parent),
@@ -67,8 +68,11 @@ MainWindow::MainWindow(QWidget* parent) :
         0, 60, "Time, s", 
         0, 100, "Usage, %");
     usageChartView->setMinimumHeight(500);
-
     labelsLayout->addWidget(usageChartView);
+
+    diskChartView = new DiskChartView(childWidget);
+    diskChartView->setMinimumHeight(500);
+    labelsLayout->addWidget(diskChartView);
 
     scrollArea->setWidget(scrollAreaWidgetContents);
 
@@ -252,35 +256,6 @@ void MainWindow::initAmdCards()
 #endif // WIN32
 }
 
-std::string MainWindow::convertBytes(ulonglong bytes)
-{
-    const float KILOBYTE = 1024.f;
-    const float MEGABYTE = 1024.f * KILOBYTE;
-    const float GIGABYTE = 1024.f * MEGABYTE;
-
-    std::ostringstream oss;
-    oss << std::fixed << std::setprecision(2);
-
-    if (bytes < KILOBYTE)
-    {
-        oss << bytes << " B";
-    }
-    else if (bytes < MEGABYTE)
-    {
-        oss << bytes / KILOBYTE << " Kb";
-    }
-    else if (bytes < GIGABYTE)
-    {
-        oss << bytes / MEGABYTE << " Mb";
-    }
-    else
-    {
-        oss << bytes / GIGABYTE << " Gb";
-    }
-
-    return oss.str();
-}
-
 void MainWindow::updateCPUAsync(CPUInfo& cpuInfo, QLabel* cpuLabel)
 {
     cpuInfo.updateInfo();
@@ -309,13 +284,13 @@ void MainWindow::updateCPUAsync(CPUInfo& cpuInfo, QLabel* cpuLabel)
 
 void MainWindow::updateMEMAsync(MEMInfo& memInfo, QLabel* memLabel)
 {
-    auto used = convertBytes(memInfo.used());
-    auto total = convertBytes(memInfo.total());
-    auto avail = convertBytes(memInfo.avail());
+    auto used = Converter::convertBytes(memInfo.used());
+    auto total = Converter::convertBytes(memInfo.total());
+    auto avail = Converter::convertBytes(memInfo.avail());
 
-    auto usedPageFile = convertBytes(memInfo.usedPageFile());
-    auto totalPageFile = convertBytes(memInfo.totalPageFile());
-    auto availPageFile = convertBytes(memInfo.availPageFile());
+    auto usedPageFile = Converter::convertBytes(memInfo.usedPageFile());
+    auto totalPageFile = Converter::convertBytes(memInfo.totalPageFile());
+    auto availPageFile = Converter::convertBytes(memInfo.availPageFile());
 
     memInfo.updateInfo();
     QString labelText = QString(
@@ -337,8 +312,8 @@ void MainWindow::updateMEMAsync(MEMInfo& memInfo, QLabel* memLabel)
 
 void MainWindow::updateGPUAsync(GPUInfo& gpuInfo, QLabel* gpuLabel)
 {
-    auto memoryUsed = convertBytes(gpuInfo.memoryUsed());
-    auto memoryTotal = convertBytes(gpuInfo.memoryTotal());
+    auto memoryUsed = Converter::convertBytes(gpuInfo.memoryUsed());
+    auto memoryTotal = Converter::convertBytes(gpuInfo.memoryTotal());
 
     gpuInfo.updateInfo();
     QString labelText = QString(
@@ -376,11 +351,11 @@ void MainWindow::updateDiskAsync(DiskInfo& diskInfo, QLabel* diskLabel)
 #endif 
     .arg(QString::fromStdWString(diskInfo.modelName()))
         .arg(diskInfo.activeTime())
-        .arg(QString::fromStdString(convertBytes(diskInfo.totalUsedBytes())))
-        .arg(QString::fromStdString(convertBytes(diskInfo.totalBytes())))
-        .arg(QString::fromStdString(convertBytes(diskInfo.totalFreeBytes())))
-        .arg(QString::fromStdString(convertBytes(diskInfo.readSpeed())))
-        .arg(QString::fromStdString(convertBytes(diskInfo.writeSpeed())))
+        .arg(QString::fromStdString(Converter::convertBytes(diskInfo.totalUsedBytes())))
+        .arg(QString::fromStdString(Converter::convertBytes(diskInfo.totalBytes())))
+        .arg(QString::fromStdString(Converter::convertBytes(diskInfo.totalFreeBytes())))
+        .arg(QString::fromStdString(Converter::convertBytes(diskInfo.readSpeed())))
+        .arg(QString::fromStdString(Converter::convertBytes(diskInfo.writeSpeed())))
         .arg(diskInfo.avgResponseTime());
 
     QMetaObject::invokeMethod(diskLabel, "setText", Qt::QueuedConnection, Q_ARG(QString, labelText));
@@ -409,4 +384,6 @@ void MainWindow::updateLabels()
         std::thread updateDiskThread(updateDiskAsync, std::ref(*iDisk), *iDiskLabel);
         updateDiskThread.detach();
     }
+
+    diskChartView->updateSpace(allDisks[0].totalFreeBytes(), allDisks[0].totalUsedBytes());
 }

@@ -6,17 +6,16 @@
 #include <QVBoxLayout>
 #include <QTimer>
 
-
 #include <thread>
-#include <sstream>
-#include <iomanip>
 
 #include "CustomChartView.h"
+#include "DiskChartView.h"
 
 #include "Info/CPUInfo.h"
 #include "Info/MEMInfo.h"
 #include "Info/DiskInfo.h"
 #include "Info/GPUInfo.h"
+#include "Converter.h"
 
 #include "InfoWidget.h"
 #include "CustomScrollBar.h"
@@ -34,8 +33,6 @@ private:
 	void initDisks();
 	void initNvidiaCards();
 	void initAmdCards();
-
-	static std::string convertBytes(ulonglong bytes);
 
 	static void updateCPUAsync(CPUInfo& cpuInfo, QLabel* cpuLabel);
 	static void updateMEMAsync(MEMInfo& memInfo, QLabel* memLabel);
@@ -62,4 +59,5 @@ private:
 	std::vector<QLabel*> allGPUsLabels;
 
 	static CustomChartView* usageChartView;
+	static DiskChartView* diskChartView;
 };
