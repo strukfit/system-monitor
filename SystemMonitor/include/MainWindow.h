@@ -2,6 +2,8 @@
 
 #include <QMainWindow>
 
+#include "UsageChartView.h"
+
 #include <QLabel>
 #include <QVBoxLayout>
 #include <QTimer>
@@ -17,7 +19,6 @@
 
 #include "InfoWidget.h"
 #include "CustomScrollBar.h"
-#include "UsageChartView.h"
 
 class MainWindow : public QMainWindow
 {
