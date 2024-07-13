@@ -2,15 +2,16 @@
 
 #include <QMainWindow>
 
-#include "UsageChartView.h"
-
 #include <QLabel>
 #include <QVBoxLayout>
 #include <QTimer>
 
+
 #include <thread>
 #include <sstream>
 #include <iomanip>
+
+#include "UsageChartView.h"
 
 #include "Info/CPUInfo.h"
 #include "Info/MEMInfo.h"
