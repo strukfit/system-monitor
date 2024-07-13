@@ -13,7 +13,7 @@ MainWindow::MainWindow(QWidget* parent) :
     memInfo()
 {
     auto centralWidget = new QWidget(this);
-    centralWidget->setStyleSheet("background-color: #272727;");
+    centralWidget->setStyleSheet("background-color: #161618;");
     auto layout = new QVBoxLayout(centralWidget);
 
     auto childWidget = new QWidget(centralWidget);
@@ -385,5 +385,5 @@ void MainWindow::updateLabels()
         updateDiskThread.detach();
     }
 
-    diskChartView->updateSpace(allDisks[0].totalFreeBytes(), allDisks[0].totalUsedBytes());
+    diskChartView->updateSpace(allDisks[0].totalFreeBytes(), allDisks[0].totalUsedBytes(), allDisks[0].totalBytes());
 }
