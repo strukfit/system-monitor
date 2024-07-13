@@ -11,7 +11,7 @@
 #include <sstream>
 #include <iomanip>
 
-#include "UsageChartView.h"
+#include "CustomChartView.h"
 
 #include "Info/CPUInfo.h"
 #include "Info/MEMInfo.h"
@@ -61,5 +61,5 @@ private:
 	std::vector<GPUInfo> allGPUs;
 	std::vector<QLabel*> allGPUsLabels;
 
-	static UsageChartView* usageChartView;
+	static CustomChartView* usageChartView;
 };

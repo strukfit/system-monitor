@@ -1,6 +1,6 @@
 #include "MainWindow.h"
 
-UsageChartView* MainWindow::usageChartView;
+CustomChartView* MainWindow::usageChartView;
 
 MainWindow::MainWindow(QWidget* parent) :
     QMainWindow(parent),
@@ -62,7 +62,10 @@ MainWindow::MainWindow(QWidget* parent) :
         allDisksLabels.push_back(diskLabel);
     }
 
-    usageChartView = new UsageChartView(childWidget, 0, 60);
+    usageChartView = new CustomChartView(
+        childWidget, 
+        0, 60, "Time, s", 
+        0, 100, "Usage, %");
     usageChartView->setMinimumHeight(500);
 
     labelsLayout->addWidget(usageChartView);
