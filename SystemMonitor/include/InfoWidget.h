@@ -2,9 +2,8 @@
 
 #include <QWidget>
 #include <QEvent>
+#include <QVBoxLayout>
 #include <QGraphicsDropShadowEffect>
-
-#include "InfoWidgetUI.h"
 
 class InfoWidget : public QWidget
 {
@@ -19,6 +18,7 @@ public:
 protected:
 	void mouseReleaseEvent(QMouseEvent* event) override;
 	bool event(QEvent* event) override;
+	void setDefaultStyle();
 
-	InfoWidgetUI* ui;
+	QVBoxLayout* layout;
 };

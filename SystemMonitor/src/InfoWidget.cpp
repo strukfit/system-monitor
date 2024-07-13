@@ -1,15 +1,20 @@
 #include "InfoWidget.h"
 
 InfoWidget::InfoWidget(QWidget* parent):
-	QWidget(parent),
-	ui(new InfoWidgetUI)
+	QWidget(parent)
 {
-	ui->setupUI(this);
+	this->setContentsMargins(0, 0, 0, 0);
+	this->setAttribute(Qt::WA_StyledBackground, true);
+	setDefaultStyle();
+
+	layout = new QVBoxLayout(this);
+	layout->setContentsMargins(0, 0, 0, 0);
+	layout->setSpacing(0);
+	layout->setAlignment(Qt::AlignCenter);
 }
 
 InfoWidget::~InfoWidget()
 {
-	delete ui;
 }
 
 void InfoWidget::mouseReleaseEvent(QMouseEvent* event)
@@ -37,7 +42,7 @@ bool InfoWidget::event(QEvent* event)
 
 	if (event->type() == QEvent::Leave)
 	{
-		ui->setDefaultStyle(this);
+		setDefaultStyle();
 
 		this->setGraphicsEffect(nullptr);
 
@@ -45,4 +50,9 @@ bool InfoWidget::event(QEvent* event)
 	}
 
 	return QWidget::event(event);
+}
+
+void InfoWidget::setDefaultStyle()
+{
+	setStyleSheet("background-color: #323232; border-radius: 10px; border: 0;");
 }
