@@ -1,13 +1,15 @@
 #include "MainWindow.h"
 
-MainWindow::MainWindow(QWidget* parent):
-	QMainWindow(parent),
+UsageChartView* MainWindow::usageChartView;
+
+MainWindow::MainWindow(QWidget* parent) :
+    QMainWindow(parent),
 #ifdef WIN32
-	wmiManager(),
+    wmiManager(),
 #endif // WIN32
-	updateIntervalMs(1000),
-	cpuInfo(),
-	memInfo()
+    updateIntervalMs(1000),
+    cpuInfo(),
+    memInfo()
 {
     auto centralWidget = new QWidget(this);
     centralWidget->setStyleSheet("background-color: #272727;");
@@ -59,6 +61,11 @@ MainWindow::MainWindow(QWidget* parent):
         labelsLayout->addWidget(diskLabel);
         allDisksLabels.push_back(diskLabel);
     }
+
+    usageChartView = new UsageChartView(childWidget, 0, 60);
+    usageChartView->setMinimumHeight(500);
+
+    labelsLayout->addWidget(usageChartView);
 
     scrollArea->setWidget(scrollAreaWidgetContents);
 
@@ -293,6 +300,8 @@ void MainWindow::updateCPUAsync(CPUInfo& cpuInfo, QLabel* cpuLabel)
         .arg(cpuInfo.logicalProcessorCount());
 
     QMetaObject::invokeMethod(cpuLabel, "setText", Qt::QueuedConnection, Q_ARG(QString, labelText));
+    
+    usageChartView->append(cpuInfo.usage());
 }
 
 void MainWindow::updateMEMAsync(MEMInfo& memInfo, QLabel* memLabel)

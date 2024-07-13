@@ -24,7 +24,7 @@
     {
       "hidden": true,
       "name": "Qt-Default",
-      "inherits": "6.7.0_msvc2019_64",
+      "inherits": "6.7.2_msvc2019_64",
       "vendor": {
         "qt-project.org/Default": {
           "checksum": "/LIi1Qk9rOuZl7aAva45VvwngbI="
@@ -33,10 +33,10 @@
     },
     {
       "hidden": true,
-      "name": "6.7.0_msvc2019_64",
+      "name": "6.7.2_msvc2019_64",
       "inherits": "Qt",
       "environment": {
-        "QTDIR": "D:/Qt/6.7.0/msvc2019_64"
+        "QTDIR": "D:/Qt/6.7.2/msvc2019_64"
       },
       "architecture": {
         "strategy": "external",

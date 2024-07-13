@@ -14,11 +14,12 @@ if(CMAKE_VERSION VERSION_LESS "3.7.0")
     set(CMAKE_INCLUDE_CURRENT_DIR ON)
 endif()
 
-find_package(QT NAMES Qt6 Qt5 REQUIRED COMPONENTS Core Widgets)
+find_package(QT NAMES Qt6 Qt5 REQUIRED COMPONENTS Core Widgets Charts)
 find_package(Qt${QT_VERSION_MAJOR}
     COMPONENTS
         Core
         Widgets
+        Charts
 )
 qt_standard_project_setup()
 
@@ -26,7 +27,7 @@ file(GLOB_RECURSE SOURCES "src/*.cpp"  "include/*.h" "main.cpp")
 set(adlx_files "")
 
 if(WIN32)
-    set(CUDA_PATH "D:/CUDA_Toolkit_v12.5")
+    set(CUDA_PATH "D:/CUDA")
     set(NVML_NAMES nvml)
     set(NVML_LIB_DIR "${CUDA_PATH}/lib/x64")
     set(NVML_INCLUDE_DIR "${CUDA_PATH}/include")
@@ -85,6 +86,7 @@ target_link_libraries(${CMAKE_PROJECT_NAME}
     PUBLIC
         Qt${QT_VERSION_MAJOR}::Core
         Qt${QT_VERSION_MAJOR}::Widgets
+        Qt${QT_VERSION_MAJOR}::Charts
 )
 
 target_include_directories(${CMAKE_PROJECT_NAME} PUBLIC "include")

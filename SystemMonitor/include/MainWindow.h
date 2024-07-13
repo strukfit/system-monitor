@@ -1,9 +1,10 @@
+#pragma once
+
 #include <QMainWindow>
 
 #include <QLabel>
 #include <QVBoxLayout>
 #include <QTimer>
-#include <QScrollArea>
 
 #include <thread>
 #include <sstream>
@@ -14,7 +15,9 @@
 #include "Info/DiskInfo.h"
 #include "Info/GPUInfo.h"
 
+#include "InfoWidget.h"
 #include "CustomScrollBar.h"
+#include "UsageChartView.h"
 
 class MainWindow : public QMainWindow
 {
@@ -54,5 +57,7 @@ private:
 	std::vector<QLabel*> allDisksLabels;
 
 	std::vector<GPUInfo> allGPUs;
-	std::vector<QLabel*> allGPUsLabels;	
+	std::vector<QLabel*> allGPUsLabels;
+
+	static UsageChartView* usageChartView;
 };
