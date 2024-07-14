@@ -22,6 +22,10 @@ protected:
 
 private:
 	void moveLabel();
+	double minY() const;
+	double maxY() const;
+	void setRangeY(double min, double max);
+	void updateYAxisRange();
 
 	QLineSeries* m_upperSeries1;
 	QLineSeries* m_lowerSeries1;
@@ -36,4 +40,5 @@ private:
 	std::deque<double> m_dataPoints2;
 
 	QLabel* m_label;
+	QValueAxis* axisY;
 };

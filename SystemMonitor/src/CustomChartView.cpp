@@ -46,7 +46,7 @@ CustomChartView::CustomChartView(QWidget* parent, int minPointsX, int maxPointsX
     axisX->setTitleBrush(QBrush(Qt::white));
     axisX->setLabelsColor(Qt::white);
 
-    auto axisY = new QValueAxis(this);
+    axisY = new QValueAxis(this);
     axisY->setRange(minPointsY, maxPointsY);
     axisY->setLabelFormat("%i");
     axisY->setTitleText(titleY);
@@ -75,6 +75,10 @@ void CustomChartView::append(double data, QString labelText)
     m_label->setText(labelText);
     moveLabel();
 
+    if (data > maxY()) {
+        setRangeY(minY(), data);
+    }
+
     int size = m_dataPoints1.size();
     if (size > m_maxPointsX)
         m_dataPoints1.pop_back();
@@ -87,11 +91,17 @@ void CustomChartView::append(double data, QString labelText)
     m_lowerSeries1->clear();
     m_lowerSeries1->append(0, 0);
     m_lowerSeries1->append(size, 0);
+
+    updateYAxisRange();
 }
 
 void CustomChartView::append(double data1, double data2, QString labelText)
 {
     append(data1, labelText);
+
+    if (data2 > maxY()) {
+        setRangeY(minY(), data2);
+    }
 
     int size = m_dataPoints2.size();
     if (size > m_maxPointsX)
@@ -105,6 +115,8 @@ void CustomChartView::append(double data1, double data2, QString labelText)
     m_lowerSeries2->clear();
     m_lowerSeries2->append(0, 0);
     m_lowerSeries2->append(size, 0);
+
+    updateYAxisRange();
 }
 
 void CustomChartView::resizeEvent(QResizeEvent* event)
@@ -117,4 +129,38 @@ void CustomChartView::moveLabel()
 {
     m_label->adjustSize();
     m_label->move(this->width() / 2.f - m_label->width() / 2.f, this->height() / 1.09 - m_label->height() / 2.f);
+}
+
+double CustomChartView::minY() const {
+    return axisY->min();
+}
+
+double CustomChartView::maxY() const {
+    return axisY->max();
+}
+
+void CustomChartView::setRangeY(double min, double max) {
+    axisY->setRange(min, max);
+}
+
+void CustomChartView::updateYAxisRange() {
+    double maxData1 = std::numeric_limits<double>::min();
+    for (const auto& data : m_dataPoints1) {
+        if (data > maxData1) {
+            maxData1 = data;
+        }
+    }
+
+    double maxData2 = std::numeric_limits<double>::min();
+    for (const auto& data : m_dataPoints2) {
+        if (data > maxData2) {
+            maxData2 = data;
+        }
+    }
+
+    double newYMax = std::max(maxData1, maxData2);
+
+    if (newYMax != maxY()) {
+        setRangeY(minY(), newYMax);
+    }
 }
