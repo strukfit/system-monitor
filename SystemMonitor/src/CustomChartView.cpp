@@ -3,7 +3,8 @@
 
 CustomChartView::CustomChartView(QWidget* parent, int minPointsX, int maxPointsX, QString titleX, int minPointsY, int maxPointsY, QString titleY, QColor borderColor1, QColor fillColor1, QColor borderColor2, QColor fillColor2):
 	QChartView(parent),
-	m_maxPointsX(maxPointsX)
+	m_maxPointsX(maxPointsX),
+    m_maxPointsY(maxPointsY)
 {
     m_label = new QLabel(this);
     m_label->setStyleSheet("background-color: transparent; color: white; font-weight: bold;");
@@ -75,9 +76,7 @@ void CustomChartView::append(double data, QString labelText)
     m_label->setText(labelText);
     moveLabel();
 
-    if (data > maxY()) {
-        setRangeY(minY(), data);
-    }
+    updateYAxisRange();
 
     int size = m_dataPoints1.size();
     if (size > m_maxPointsX)
@@ -91,17 +90,13 @@ void CustomChartView::append(double data, QString labelText)
     m_lowerSeries1->clear();
     m_lowerSeries1->append(0, 0);
     m_lowerSeries1->append(size, 0);
-
-    updateYAxisRange();
 }
 
 void CustomChartView::append(double data1, double data2, QString labelText)
 {
     append(data1, labelText);
 
-    if (data2 > maxY()) {
-        setRangeY(minY(), data2);
-    }
+    updateYAxisRange();
 
     int size = m_dataPoints2.size();
     if (size > m_maxPointsX)
@@ -115,8 +110,6 @@ void CustomChartView::append(double data1, double data2, QString labelText)
     m_lowerSeries2->clear();
     m_lowerSeries2->append(0, 0);
     m_lowerSeries2->append(size, 0);
-
-    updateYAxisRange();
 }
 
 void CustomChartView::resizeEvent(QResizeEvent* event)
@@ -160,7 +153,10 @@ void CustomChartView::updateYAxisRange() {
 
     double newYMax = std::max(maxData1, maxData2);
 
+    if (newYMax < m_maxPointsY)
+        newYMax = m_maxPointsY;
+
     if (newYMax != maxY()) {
-        setRangeY(minY(), newYMax);
+        setRangeY(minY(), std::ceil(newYMax / 10.) * 10);
     }
 }

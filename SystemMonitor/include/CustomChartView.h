@@ -36,6 +36,7 @@ private:
 	QAreaSeries* m_areaSeries2;
 
 	int m_maxPointsX;
+	int m_maxPointsY;
 	std::deque<double> m_dataPoints1;
 	std::deque<double> m_dataPoints2;
 
