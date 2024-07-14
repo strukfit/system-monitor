@@ -2,6 +2,7 @@
 
 CustomChartView* MainWindow::usageChartView;
 DiskChartView* MainWindow::diskChartView;
+CustomChartView* MainWindow::diskSpeedChartView;
 
 MainWindow::MainWindow(QWidget* parent) :
     QMainWindow(parent),
@@ -65,7 +66,7 @@ MainWindow::MainWindow(QWidget* parent) :
 
     usageChartView = new CustomChartView(
         childWidget, 
-        0, 60, "Time, s", 
+        0, 60, "\n", 
         0, 100, "Usage, %");
     usageChartView->setMinimumHeight(500);
     labelsLayout->addWidget(usageChartView);
@@ -73,6 +74,13 @@ MainWindow::MainWindow(QWidget* parent) :
     diskChartView = new DiskChartView(childWidget);
     diskChartView->setMinimumHeight(500);
     labelsLayout->addWidget(diskChartView);
+
+    diskSpeedChartView = new CustomChartView(
+        childWidget,
+        0, 60, "\n",
+        0, 500, "Write/read speed, Kb/s");
+    diskSpeedChartView->setMinimumHeight(500);
+    labelsLayout->addWidget(diskSpeedChartView);
 
     scrollArea->setWidget(scrollAreaWidgetContents);
 
@@ -278,8 +286,6 @@ void MainWindow::updateCPUAsync(CPUInfo& cpuInfo, QLabel* cpuLabel)
         .arg(cpuInfo.logicalProcessorCount());
 
     QMetaObject::invokeMethod(cpuLabel, "setText", Qt::QueuedConnection, Q_ARG(QString, labelText));
-    
-    usageChartView->append(cpuInfo.usage());
 }
 
 void MainWindow::updateMEMAsync(MEMInfo& memInfo, QLabel* memLabel)
@@ -386,4 +392,12 @@ void MainWindow::updateLabels()
     }
 
     diskChartView->updateSpace(allDisks[0].totalFreeBytes(), allDisks[0].totalUsedBytes(), allDisks[0].totalBytes());
+
+    QString labelText = QString("CPU usage: %1").arg(cpuInfo.usage());
+    usageChartView->append(cpuInfo.usage(), labelText);
+    
+    QString writeSpeed = QString::fromStdString(Converter::convertBytes(allDisks[0].writeSpeed()));
+    QString readSpeed = QString::fromStdString(Converter::convertBytes(allDisks[0].readSpeed()));
+    labelText = QString("Write speed: %1\nRead speed: %2").arg(writeSpeed).arg(readSpeed);
+    diskSpeedChartView->append(allDisks[0].writeSpeed() / 1024., allDisks[0].readSpeed() / 1024., labelText);
 }

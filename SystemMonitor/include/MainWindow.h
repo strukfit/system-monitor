@@ -60,4 +60,5 @@ private:
 
 	static CustomChartView* usageChartView;
 	static DiskChartView* diskChartView;
+	static CustomChartView* diskSpeedChartView;
 };
