@@ -1,7 +1,7 @@
 #include "CustomChartView.h"
 
 
-CustomChartView::CustomChartView(QWidget* parent, int minPointsX, int maxPointsX, QString titleX, int minPointsY, int maxPointsY, QString titleY, QColor borderColor1, QColor fillColor1, QColor borderColor2, QColor fillColor2):
+CustomChartView::CustomChartView(QWidget* parent, double minPointsX, double maxPointsX, QString titleX, double minPointsY, double maxPointsY, QString titleY, QColor borderColor1, QColor fillColor1, QColor borderColor2, QColor fillColor2):
 	QChartView(parent),
 	m_maxPointsX(maxPointsX),
     m_maxPointsY(maxPointsY)
@@ -48,7 +48,7 @@ CustomChartView::CustomChartView(QWidget* parent, int minPointsX, int maxPointsX
 
     axisY = new QValueAxis(this);
     axisY->setRange(minPointsY, maxPointsY);
-    axisY->setLabelFormat("%i");
+    axisY->setLabelFormat("%.2f");
     axisY->setTitleText(titleY);
 
     axisY->setLinePenColor(QColor("#36363B"));

@@ -18,7 +18,9 @@
 #include "Converter.h"
 
 #include "InfoWidgets/CPUInfoWidget.h"
+#include "InfoWidgets/MEMInfoWidget.h"
 #include "CustomScrollBar.h"
+
 
 class MainWindow : public QMainWindow
 {
@@ -34,8 +36,6 @@ private:
 	void initNvidiaCards();
 	void initAmdCards();
 
-	static void updateCPUAsync(CPUInfo& cpuInfo, QLabel* cpuLabel);
-	static void updateMEMAsync(MEMInfo& memInfo, QLabel* memLabel);
 	static void updateGPUAsync(GPUInfo& gpuInfo, QLabel* gpuLabel);
 	static void updateDiskAsync(DiskInfo& diskInfo, QLabel* diskLabel);
 
@@ -46,11 +46,6 @@ private:
 
 	int updateIntervalMs;
 
-	QLabel* cpuLabel;
-	QLabel* memLabel;
-	
-	MEMInfo memInfo;
-
 	std::vector<DiskInfo> allDisks;
 	std::vector<QLabel*> allDisksLabels;
 
@@ -58,6 +53,7 @@ private:
 	std::vector<QLabel*> allGPUsLabels;
 
 	CPUInfoWidget* cpuInfoWidget;
+	MEMInfoWidget* memInfoWidget;
 	static DiskChartView* diskChartView;
 	static CustomChartView* diskSpeedChartView;
 };

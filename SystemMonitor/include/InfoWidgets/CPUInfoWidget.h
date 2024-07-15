@@ -13,8 +13,6 @@
 
 class CPUInfoWidget : public InfoWidget
 {
-	Q_OBJECT
-
 public:
 	CPUInfoWidget(QWidget* parent = nullptr);
 	

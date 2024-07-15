@@ -8,8 +8,7 @@ MainWindow::MainWindow(QWidget* parent) :
 #ifdef WIN32
     wmiManager(),
 #endif // WIN32
-    updateIntervalMs(1000),
-    memInfo()
+    updateIntervalMs(1000)
 {
     auto centralWidget = new QWidget(this);
     centralWidget->setStyleSheet("background-color: #161618;");
@@ -32,12 +31,6 @@ MainWindow::MainWindow(QWidget* parent) :
     QWidget* scrollAreaWidgetContents = new QWidget();
 
     auto labelsLayout = new QVBoxLayout(scrollAreaWidgetContents);
-
-    cpuLabel = new QLabel(nullptr, childWidget);
-    memLabel = new QLabel(nullptr, childWidget);
-
-    labelsLayout->addWidget(cpuLabel);
-    labelsLayout->addWidget(memLabel);
 
     initNvidiaCards();
     initAmdCards();
@@ -64,6 +57,9 @@ MainWindow::MainWindow(QWidget* parent) :
 
     cpuInfoWidget = new CPUInfoWidget(childWidget);
     labelsLayout->addWidget(cpuInfoWidget);
+    
+    memInfoWidget = new MEMInfoWidget(childWidget);
+    labelsLayout->addWidget(memInfoWidget);
 
     diskChartView = new DiskChartView(childWidget);
     diskChartView->setMinimumHeight(500);
@@ -258,34 +254,6 @@ void MainWindow::initAmdCards()
 #endif // WIN32
 }
 
-void MainWindow::updateMEMAsync(MEMInfo& memInfo, QLabel* memLabel)
-{
-    auto used = Converter::convertBytes(memInfo.used());
-    auto total = Converter::convertBytes(memInfo.total());
-    auto avail = Converter::convertBytes(memInfo.avail());
-
-    auto usedPageFile = Converter::convertBytes(memInfo.usedPageFile());
-    auto totalPageFile = Converter::convertBytes(memInfo.totalPageFile());
-    auto availPageFile = Converter::convertBytes(memInfo.availPageFile());
-
-    memInfo.updateInfo();
-    QString labelText = QString(
-        "MEM: %1/%2\n"
-        "MEM_AVAIL: %3\n"
-        "MEM_PAGE_FILE: %4/%5\n"
-        "MEM_PAGE_FILE_AVAIL: %6\n")
-        .arg(QString::fromStdString(used)).arg(QString::fromStdString(total))
-        .arg(QString::fromStdString(avail))
-        .arg(QString::fromStdString(usedPageFile)).arg(QString::fromStdString(totalPageFile))
-        .arg(QString::fromStdString(availPageFile));
-
-#ifdef WIN32
-    labelText.append(QString("MEM_SPEED: %1 MHz\n").arg(memInfo.speedMHz()));
-#endif // WIN32
-
-    QMetaObject::invokeMethod(memLabel, "setText", Qt::QueuedConnection, Q_ARG(QString, labelText));
-}
-
 void MainWindow::updateGPUAsync(GPUInfo& gpuInfo, QLabel* gpuLabel)
 {
     auto memoryUsed = Converter::convertBytes(gpuInfo.memoryUsed());
@@ -339,11 +307,10 @@ void MainWindow::updateDiskAsync(DiskInfo& diskInfo, QLabel* diskLabel)
 
 void MainWindow::updateLabels()
 {
-    //std::thread updateCPUThread(updateCPUAsync, std::ref(cpuInfo), cpuLabel);
     std::thread updateCPUThread(&CPUInfoWidget::updateInfo, cpuInfoWidget);
     updateCPUThread.detach();
 
-    std::thread updateMEMThread(updateMEMAsync, std::ref(memInfo), memLabel);
+    std::thread updateMEMThread(&MEMInfoWidget::updateInfo, memInfoWidget);
     updateMEMThread.detach();
 
     auto iGPU = allGPUs.begin();

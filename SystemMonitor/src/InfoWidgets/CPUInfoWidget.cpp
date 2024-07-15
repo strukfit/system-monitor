@@ -71,24 +71,6 @@ CPUInfoWidget::CPUInfoWidget(QWidget* parent) :
     logicalProcessorsLabel->setText(labelText);
 
     m_layout->addLayout(infoLayout);
-
-    /*QString labelText = QString(
-        "CPU_NAME: %1\n"
-        "CPU_USAGE: %2\n"
-        "CPU_PROCESSES: %3\n"
-        "CPU_THREADS: %4\n"
-        "CPU_HANDLES: %5\n"
-        "CPU_BASE_SPEED: %6 GHz\n"
-        "CPU_CORES: %7\n"
-        "CPU_LOGIC_PROC: %8\n")
-        .arg(QString::fromStdString(m_cpuInfo.modelName()))
-        .arg(m_cpuInfo.usage())
-        .arg(m_cpuInfo.processCount())
-        .arg(m_cpuInfo.threadCount())
-        .arg(m_cpuInfo.handleCount())
-        .arg(m_cpuInfo.baseSpeed())
-        .arg(m_cpuInfo.coreCount())
-        .arg(m_cpuInfo.logicalProcessorCount());*/
 }
 
 void CPUInfoWidget::updateInfo()
