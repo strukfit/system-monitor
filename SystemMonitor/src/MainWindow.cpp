@@ -30,17 +30,7 @@ MainWindow::MainWindow(QWidget* parent) :
 
     QWidget* scrollAreaWidgetContents = new QWidget();
 
-    auto labelsLayout = new QVBoxLayout(scrollAreaWidgetContents);
-
-    initNvidiaCards();
-    initAmdCards();
-
-    for (int i = 0; i < allGPUs.size(); i++)
-    {
-        auto gpuLabel = new QLabel(NULL, childWidget);
-        labelsLayout->addWidget(gpuLabel);
-        allGPUsLabels.push_back(gpuLabel);
-    }
+    auto widgetsLayout = new QVBoxLayout(scrollAreaWidgetContents);
 
 #ifdef __linux__
     DiskInfo::setUpdateInterval(updateIntervalMs / 1000);
@@ -51,26 +41,31 @@ MainWindow::MainWindow(QWidget* parent) :
     for (int i = 0; i < allDisks.size(); i++)
     {
         auto diskLabel = new QLabel(NULL, childWidget);
-        labelsLayout->addWidget(diskLabel);
+        widgetsLayout->addWidget(diskLabel);
         allDisksLabels.push_back(diskLabel);
     }
 
-    cpuInfoWidget = new CPUInfoWidget(childWidget);
-    labelsLayout->addWidget(cpuInfoWidget);
+    auto cpuInfoWidget = new CPUInfoWidget(childWidget);
+    allWidgets.push_back(cpuInfoWidget);
+    widgetsLayout->addWidget(cpuInfoWidget);
     
-    memInfoWidget = new MEMInfoWidget(childWidget);
-    labelsLayout->addWidget(memInfoWidget);
+    auto memInfoWidget = new MEMInfoWidget(childWidget);
+    allWidgets.push_back(memInfoWidget);
+    widgetsLayout->addWidget(memInfoWidget);
+
+    initNvidiaCards(childWidget, widgetsLayout);
+    initAmdCards(childWidget, widgetsLayout);
 
     diskChartView = new DiskChartView(childWidget);
     diskChartView->setMinimumHeight(500);
-    labelsLayout->addWidget(diskChartView);
+    widgetsLayout->addWidget(diskChartView);
 
     diskSpeedChartView = new CustomChartView(
         childWidget,
         0, 60, "\n",
         0, 500, "Write/read speed, Kb/s");
     diskSpeedChartView->setMinimumHeight(500);
-    labelsLayout->addWidget(diskSpeedChartView);
+    widgetsLayout->addWidget(diskSpeedChartView);
 
     scrollArea->setWidget(scrollAreaWidgetContents);
 
@@ -78,10 +73,10 @@ MainWindow::MainWindow(QWidget* parent) :
 
     layout->addWidget(childWidget);
 
-    updateLabels();
+    updateWidgets();
 
     auto timer = new QTimer(centralWidget);
-    QObject::connect(timer, &QTimer::timeout, this, &MainWindow::updateLabels);
+    QObject::connect(timer, &QTimer::timeout, this, &MainWindow::updateWidgets);
     timer->start(updateIntervalMs);
 
     this->setCentralWidget(centralWidget);
@@ -139,7 +134,7 @@ void MainWindow::initDisks()
 #endif // __linux__
 }
 
-void MainWindow::initNvidiaCards()
+void MainWindow::initNvidiaCards(QWidget* parent, QLayout* layout)
 {
 #ifdef WIN32
     nvmlReturn_t result;
@@ -179,8 +174,9 @@ void MainWindow::initNvidiaCards()
             qDebug() << "Failed to get name for device " << i << ": " << nvmlErrorString(result);
             continue;
         }
-
-        allGPUs.push_back(GPUInfo(static_cast<QString>(name), gpu::NVIDIA, device));
+        auto gpuInfoWidget = new GPUInfoWidget(parent, static_cast<QString>(name), gpu::NVIDIA, device);
+        allWidgets.push_back(gpuInfoWidget);
+        layout->addWidget(gpuInfoWidget);
     }
 #endif // WIN32
 
@@ -204,7 +200,7 @@ void MainWindow::initNvidiaCards()
 #endif // __linux__
 }
 
-void MainWindow::initAmdCards()
+void MainWindow::initAmdCards(QWidget* parent, QLayout* layout)
 {
 #ifdef WIN32
     ADLX_RESULT res = ADLX_FAIL;
@@ -249,29 +245,11 @@ void MainWindow::initAmdCards()
         const char* gpuName = nullptr;
         gpu->Name(&gpuName);
 
-        allGPUs.push_back(GPUInfo(static_cast<QString>(gpuName), gpu::AMD, gpu, perfMonitoringServices));
+        auto gpuInfoWidget = new GPUInfoWidget(parent, static_cast<QString>(gpuName), gpu::AMD, gpu, perfMonitoringServices);
+        allWidgets.push_back(gpuInfoWidget);
+        layout->addWidget(gpuInfoWidget);
     }
 #endif // WIN32
-}
-
-void MainWindow::updateGPUAsync(GPUInfo& gpuInfo, QLabel* gpuLabel)
-{
-    auto memoryUsed = Converter::convertBytes(gpuInfo.memoryUsed());
-    auto memoryTotal = Converter::convertBytes(gpuInfo.memoryTotal());
-
-    gpuInfo.updateInfo();
-    QString labelText = QString(
-        "GPU_NAME: %1\n"
-        "GPU_USAGE: %2 %\n"
-        "GPU_MEM_USAGE: %3/%4\n"
-        "GPU_TEMPERATURE: %5 C\n\n")
-        .arg(gpuInfo.modelName())
-        .arg(gpuInfo.usage())
-        .arg(QString::fromStdString(memoryUsed))
-        .arg(QString::fromStdString(memoryTotal))
-        .arg(gpuInfo.temperature());
-
-    QMetaObject::invokeMethod(gpuLabel, "setText", Qt::QueuedConnection, Q_ARG(QString, labelText));
 }
 
 void MainWindow::updateDiskAsync(DiskInfo& diskInfo, QLabel* diskLabel)
@@ -305,8 +283,9 @@ void MainWindow::updateDiskAsync(DiskInfo& diskInfo, QLabel* diskLabel)
     QMetaObject::invokeMethod(diskLabel, "setText", Qt::QueuedConnection, Q_ARG(QString, labelText));
 }
 
-void MainWindow::updateLabels()
+void MainWindow::updateWidgets()
 {
+    /*
     std::thread updateCPUThread(&CPUInfoWidget::updateInfo, cpuInfoWidget);
     updateCPUThread.detach();
 
@@ -319,6 +298,12 @@ void MainWindow::updateLabels()
     {
         std::thread updateGPUThread(updateGPUAsync, std::ref(*iGPU), *iGPULabel);
         updateGPUThread.detach();
+    }*/
+
+    for (auto& widget : allWidgets)
+    {
+        std::thread updateWidgetThread(&InfoWidget::updateInfo, widget);
+        updateWidgetThread.detach();
     }
 
     auto iDisk = allDisks.begin();

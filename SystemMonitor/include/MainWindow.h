@@ -19,6 +19,7 @@
 
 #include "InfoWidgets/CPUInfoWidget.h"
 #include "InfoWidgets/MEMInfoWidget.h"
+#include "InfoWidgets/GPUInfoWidget.h"
 #include "CustomScrollBar.h"
 
 
@@ -30,13 +31,12 @@ public:
 	~MainWindow();
 
 private:
-	Q_SLOT void updateLabels();
+	Q_SLOT void updateWidgets();
 
 	void initDisks();
-	void initNvidiaCards();
-	void initAmdCards();
+	void initNvidiaCards(QWidget* parent, QLayout* layout);
+	void initAmdCards(QWidget* parent, QLayout* layout);
 
-	static void updateGPUAsync(GPUInfo& gpuInfo, QLabel* gpuLabel);
 	static void updateDiskAsync(DiskInfo& diskInfo, QLabel* diskLabel);
 
 #ifdef _WIN32
@@ -49,11 +49,10 @@ private:
 	std::vector<DiskInfo> allDisks;
 	std::vector<QLabel*> allDisksLabels;
 
-	std::vector<GPUInfo> allGPUs;
-	std::vector<QLabel*> allGPUsLabels;
+	std::vector<InfoWidget*> allWidgets;
 
-	CPUInfoWidget* cpuInfoWidget;
-	MEMInfoWidget* memInfoWidget;
+	/*CPUInfoWidget* cpuInfoWidget;
+	MEMInfoWidget* memInfoWidget;*/
 	static DiskChartView* diskChartView;
 	static CustomChartView* diskSpeedChartView;
 };
