@@ -14,14 +14,10 @@ class CustomChartView : public QChartView
 public:
 	CustomChartView(QWidget* parent = nullptr, int minPointsX = 0, int maxPointsX = 1, QString titleX = "", int minPointsY = 0, int maxPointsY = 1, QString titleY = "", QColor borderColor1 = QColor(150, 150, 250, 255), QColor fillColor1 = QColor(150, 150, 250, 100), QColor borderColor2 = QColor(230, 122, 50, 255), QColor fillColor2 = QColor(230, 122, 50, 100));
 
-	void append(double data, QString labelText);
-	void append(double data1, double data2, QString labelText);
-
-protected:
-	void resizeEvent(QResizeEvent* event) override;
+	void append(double data);
+	void append(double data1, double data2);
 
 private:
-	void moveLabel();
 	double minY() const;
 	double maxY() const;
 	void setRangeY(double min, double max);
@@ -40,6 +36,5 @@ private:
 	std::deque<double> m_dataPoints1;
 	std::deque<double> m_dataPoints2;
 
-	QLabel* m_label;
 	QValueAxis* axisY;
 };

@@ -14,11 +14,16 @@ public:
 	~InfoWidget();
 
 	Q_SIGNAL void clicked();
+	virtual void updateInfo();
+
+protected:
+	Q_SIGNAL void infoUpdated();
+	virtual Q_SLOT void updateLabels();
 
 protected:
 	void mouseReleaseEvent(QMouseEvent* event) override;
 	bool event(QEvent* event) override;
 	void setDefaultStyle();
 
-	QVBoxLayout* layout;
+	QVBoxLayout* m_layout;
 };

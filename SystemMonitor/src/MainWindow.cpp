@@ -1,6 +1,5 @@
 #include "MainWindow.h"
 
-CustomChartView* MainWindow::usageChartView;
 DiskChartView* MainWindow::diskChartView;
 CustomChartView* MainWindow::diskSpeedChartView;
 
@@ -10,7 +9,6 @@ MainWindow::MainWindow(QWidget* parent) :
     wmiManager(),
 #endif // WIN32
     updateIntervalMs(1000),
-    cpuInfo(),
     memInfo()
 {
     auto centralWidget = new QWidget(this);
@@ -64,12 +62,8 @@ MainWindow::MainWindow(QWidget* parent) :
         allDisksLabels.push_back(diskLabel);
     }
 
-    usageChartView = new CustomChartView(
-        childWidget, 
-        0, 60, "\n", 
-        0, 100, "Usage, %");
-    usageChartView->setMinimumHeight(500);
-    labelsLayout->addWidget(usageChartView);
+    cpuInfoWidget = new CPUInfoWidget(childWidget);
+    labelsLayout->addWidget(cpuInfoWidget);
 
     diskChartView = new DiskChartView(childWidget);
     diskChartView->setMinimumHeight(500);
@@ -264,30 +258,6 @@ void MainWindow::initAmdCards()
 #endif // WIN32
 }
 
-void MainWindow::updateCPUAsync(CPUInfo& cpuInfo, QLabel* cpuLabel)
-{
-    cpuInfo.updateInfo();
-    QString labelText = QString(
-        "CPU_NAME: %1\n"
-        "CPU_USAGE: %2\n"
-        "CPU_PROCESSES: %3\n"
-        "CPU_THREADS: %4\n"
-        "CPU_HANDLES: %5\n"
-        "CPU_BASE_SPEED: %6 GHz\n"
-        "CPU_CORES: %7\n"
-        "CPU_LOGIC_PROC: %8\n")
-        .arg(QString::fromStdString(cpuInfo.modelName()))
-        .arg(cpuInfo.usage())
-        .arg(cpuInfo.processCount())
-        .arg(cpuInfo.threadCount())
-        .arg(cpuInfo.handleCount())
-        .arg(cpuInfo.baseSpeed())
-        .arg(cpuInfo.coreCount())
-        .arg(cpuInfo.logicalProcessorCount());
-
-    QMetaObject::invokeMethod(cpuLabel, "setText", Qt::QueuedConnection, Q_ARG(QString, labelText));
-}
-
 void MainWindow::updateMEMAsync(MEMInfo& memInfo, QLabel* memLabel)
 {
     auto used = Converter::convertBytes(memInfo.used());
@@ -369,7 +339,8 @@ void MainWindow::updateDiskAsync(DiskInfo& diskInfo, QLabel* diskLabel)
 
 void MainWindow::updateLabels()
 {
-    std::thread updateCPUThread(updateCPUAsync, std::ref(cpuInfo), cpuLabel);
+    //std::thread updateCPUThread(updateCPUAsync, std::ref(cpuInfo), cpuLabel);
+    std::thread updateCPUThread(&CPUInfoWidget::updateInfo, cpuInfoWidget);
     updateCPUThread.detach();
 
     std::thread updateMEMThread(updateMEMAsync, std::ref(memInfo), memLabel);
@@ -392,12 +363,9 @@ void MainWindow::updateLabels()
     }
 
     diskChartView->updateSpace(allDisks[0].totalFreeBytes(), allDisks[0].totalUsedBytes(), allDisks[0].totalBytes());
-
-    QString labelText = QString("CPU usage: %1").arg(cpuInfo.usage());
-    usageChartView->append(cpuInfo.usage(), labelText);
     
     QString writeSpeed = QString::fromStdString(Converter::convertBytes(allDisks[0].writeSpeed()));
     QString readSpeed = QString::fromStdString(Converter::convertBytes(allDisks[0].readSpeed()));
-    labelText = QString("Write speed: %1\nRead speed: %2").arg(writeSpeed).arg(readSpeed);
-    diskSpeedChartView->append(allDisks[0].writeSpeed() / 1024., allDisks[0].readSpeed() / 1024., labelText);
+    QString labelText = QString("Write speed: %1\nRead speed: %2").arg(writeSpeed).arg(readSpeed);
+    diskSpeedChartView->append(allDisks[0].writeSpeed() / 1024., allDisks[0].readSpeed() / 1024.);
 }

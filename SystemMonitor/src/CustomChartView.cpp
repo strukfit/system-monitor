@@ -6,8 +6,7 @@ CustomChartView::CustomChartView(QWidget* parent, int minPointsX, int maxPointsX
 	m_maxPointsX(maxPointsX),
     m_maxPointsY(maxPointsY)
 {
-    m_label = new QLabel(this);
-    m_label->setStyleSheet("background-color: transparent; color: white; font-weight: bold;");
+    this->setStyleSheet("border: 0;");
 
     m_upperSeries1 = new QLineSeries(this);
     m_lowerSeries1 = new QLineSeries(this);
@@ -31,7 +30,7 @@ CustomChartView::CustomChartView(QWidget* parent, int minPointsX, int maxPointsX
     chart->createDefaultAxes();
     chart->legend()->setVisible(false);
 
-    chart->setBackgroundBrush(QBrush(QColor("#202025")));
+    chart->setBackgroundBrush(QBrush(Qt::transparent));
 
     auto axisX = new QValueAxis(this);
     axisX->setRange(minPointsX, maxPointsX);
@@ -70,12 +69,8 @@ CustomChartView::CustomChartView(QWidget* parent, int minPointsX, int maxPointsX
     this->setRenderHint(QPainter::Antialiasing);
 }
 
-void CustomChartView::append(double data, QString labelText)
+void CustomChartView::append(double data)
 {
-    m_label->clear();
-    m_label->setText(labelText);
-    moveLabel();
-
     updateYAxisRange();
 
     int size = m_dataPoints1.size();
@@ -92,9 +87,9 @@ void CustomChartView::append(double data, QString labelText)
     m_lowerSeries1->append(size, 0);
 }
 
-void CustomChartView::append(double data1, double data2, QString labelText)
+void CustomChartView::append(double data1, double data2)
 {
-    append(data1, labelText);
+    append(data1);
 
     updateYAxisRange();
 
@@ -110,18 +105,6 @@ void CustomChartView::append(double data1, double data2, QString labelText)
     m_lowerSeries2->clear();
     m_lowerSeries2->append(0, 0);
     m_lowerSeries2->append(size, 0);
-}
-
-void CustomChartView::resizeEvent(QResizeEvent* event)
-{
-    moveLabel();
-    QChartView::resizeEvent(event);
-}
-
-void CustomChartView::moveLabel()
-{
-    m_label->adjustSize();
-    m_label->move(this->width() / 2.f - m_label->width() / 2.f, this->height() / 1.09 - m_label->height() / 2.f);
 }
 
 double CustomChartView::minY() const {

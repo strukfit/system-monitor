@@ -17,7 +17,7 @@
 #include "Info/GPUInfo.h"
 #include "Converter.h"
 
-#include "InfoWidget.h"
+#include "InfoWidgets/CPUInfoWidget.h"
 #include "CustomScrollBar.h"
 
 class MainWindow : public QMainWindow
@@ -48,8 +48,7 @@ private:
 
 	QLabel* cpuLabel;
 	QLabel* memLabel;
-
-	CPUInfo cpuInfo;
+	
 	MEMInfo memInfo;
 
 	std::vector<DiskInfo> allDisks;
@@ -58,7 +57,7 @@ private:
 	std::vector<GPUInfo> allGPUs;
 	std::vector<QLabel*> allGPUsLabels;
 
-	static CustomChartView* usageChartView;
+	CPUInfoWidget* cpuInfoWidget;
 	static DiskChartView* diskChartView;
 	static CustomChartView* diskSpeedChartView;
 };

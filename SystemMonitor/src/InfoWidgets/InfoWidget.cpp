@@ -1,19 +1,29 @@
-#include "InfoWidget.h"
+#include "InfoWidgets/InfoWidget.h"
 
 InfoWidget::InfoWidget(QWidget* parent):
 	QWidget(parent)
 {
-	this->setContentsMargins(0, 0, 0, 0);
+	this->setContentsMargins(0, 20, 0, 20);
 	this->setAttribute(Qt::WA_StyledBackground, true);
 	setDefaultStyle();
 
-	layout = new QVBoxLayout(this);
-	layout->setContentsMargins(0, 0, 0, 0);
-	layout->setSpacing(0);
-	layout->setAlignment(Qt::AlignCenter);
+	m_layout = new QVBoxLayout(this);
+	m_layout->setContentsMargins(0, 0, 0, 0);
+	m_layout->setSpacing(0);
+	m_layout->setAlignment(Qt::AlignCenter);
+
+	connect(this, &InfoWidget::infoUpdated, this, &InfoWidget::updateLabels);
 }
 
 InfoWidget::~InfoWidget()
+{
+}
+
+void InfoWidget::updateInfo()
+{
+}
+
+void InfoWidget::updateLabels()
 {
 }
 
@@ -28,12 +38,12 @@ bool InfoWidget::event(QEvent* event)
 {
 	if (event->type() == QEvent::Enter)
 	{
-		setStyleSheet("background-color: #2E2E2E; border-radius: 10px; border: 1px solid #363636;");
+		setStyleSheet("background-color: #212126; border-radius: 10px; border: 1px solid #363636;");
 
 		QGraphicsDropShadowEffect* shadowEffect = new QGraphicsDropShadowEffect;
-		shadowEffect->setBlurRadius(20);
-		shadowEffect->setColor(QColor(0, 0, 0, 40));
-		shadowEffect->setOffset(0, 7);
+		shadowEffect->setBlurRadius(30);
+		shadowEffect->setColor(QColor(0, 160, 255, 100));
+		shadowEffect->setOffset(0, 1);
 
 		this->setGraphicsEffect(shadowEffect);
 
@@ -54,5 +64,5 @@ bool InfoWidget::event(QEvent* event)
 
 void InfoWidget::setDefaultStyle()
 {
-	setStyleSheet("background-color: #323232; border-radius: 10px; border: 0;");
+	setStyleSheet("background-color: #202025; border-radius: 10px; border: 0;");
 }
