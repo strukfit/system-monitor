@@ -47,10 +47,18 @@ void DiskInfoWidget::init()
     m_usageChartView->setMinimumHeight(500);
     m_layout->addWidget(m_usageChartView);
 
+    QColor 
+        readSpeedColor = QColor(150, 150, 250, 255),
+        readSpeedFillColor = QColor(150, 150, 250, 100),
+        writeSpeedColor = QColor(230, 122, 50, 255),
+        writeSpeedFillColor = QColor(230, 122, 50, 100);
+
     m_speedChartView = new CustomChartView(
         this,
         0, 60, "\n",
-        0, 500, "Write/read speed, Kb/s");
+        0, 500, "Write/read speed, Kb/s",
+        readSpeedColor, readSpeedFillColor,
+        writeSpeedColor, writeSpeedFillColor);
     m_speedChartView->setMinimumHeight(500);
     m_layout->addWidget(m_speedChartView);
 
@@ -68,12 +76,38 @@ void DiskInfoWidget::init()
 
     labelInit(m_activeTimeLabel);
     infoLayout->addWidget(m_activeTimeLabel, 0, 0);
-    labelInit(m_readSpeedLabel);
-    infoLayout->addWidget(m_readSpeedLabel, 0, 1);
-    labelInit(m_writeSpeedLabel);
-    infoLayout->addWidget(m_writeSpeedLabel, 1, 0);
     labelInit(m_avgResponseTimeLabel);
-    infoLayout->addWidget(m_avgResponseTimeLabel, 1, 1);
+    infoLayout->addWidget(m_avgResponseTimeLabel, 0, 1);
+
+    auto readSpeedColorRect = new QFrame(this);
+    readSpeedColorRect->setFixedSize(5, 30);
+    readSpeedColorRect->setStyleSheet(QString("background-color: %1;").arg(readSpeedColor.name()));
+
+    labelInit(m_readSpeedLabel);
+
+    auto readSpeedLayout = new QHBoxLayout();
+    readSpeedLayout->setContentsMargins(0, 0, 0, 0);
+    readSpeedLayout->setSpacing(5);
+
+    readSpeedLayout->addWidget(readSpeedColorRect);
+    readSpeedLayout->addWidget(m_readSpeedLabel);
+
+    infoLayout->addLayout(readSpeedLayout, 1, 0);
+
+    auto writeSpeedColorRect = new QFrame(this);
+    writeSpeedColorRect->setFixedSize(5, 30);
+    writeSpeedColorRect->setStyleSheet(QString("background-color: %1;").arg(writeSpeedColor.name()));
+
+    labelInit(m_writeSpeedLabel);
+
+    auto writeSpeedLayout = new QHBoxLayout();
+    writeSpeedLayout->setContentsMargins(0, 0, 0, 0);
+    writeSpeedLayout->setSpacing(5);
+
+    writeSpeedLayout->addWidget(writeSpeedColorRect);
+    writeSpeedLayout->addWidget(m_writeSpeedLabel);
+
+    infoLayout->addLayout(writeSpeedLayout, 1, 1);
 
     m_layout->addLayout(infoLayout);
 }

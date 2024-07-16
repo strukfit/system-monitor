@@ -1,6 +1,6 @@
 #include "DiskChartView.h"
 
-const QString DiskChartView::BACKGROUND_COLOR = "transparent";
+const QString DiskChartView::BACKGROUND_COLOR = "#202025";
 
 DiskChartView::DiskChartView(QWidget* parent):
     QChartView(parent)

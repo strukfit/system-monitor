@@ -9,10 +9,14 @@ CustomChartView::CustomChartView(QWidget* parent, double minPointsX, double maxP
     this->setStyleSheet("border: 0;");
 
     m_upperSeries1 = new QLineSeries(this);
+    m_upperSeries1->setColor(borderColor1);
     m_lowerSeries1 = new QLineSeries(this);
+    m_lowerSeries1->setColor(borderColor1);
 
     m_upperSeries2 = new QLineSeries(this);
+    m_upperSeries2->setColor(borderColor2);
     m_lowerSeries2 = new QLineSeries(this);
+    m_lowerSeries2->setColor(borderColor2);
 
     m_areaSeries1 = new QAreaSeries(m_upperSeries1, m_lowerSeries1);
     m_areaSeries1->setColor(fillColor1);

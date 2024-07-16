@@ -47,7 +47,8 @@ void GPUInfoWidget::init()
     m_usageChartView = new CustomChartView(
         this,
         0, 60, "",
-        0, 100, "Usage, %");
+        0, 100, "Usage, %",
+        QColor(255, 100, 0), QColor(255, 100, 0, 100));
     m_usageChartView->setMinimumHeight(300);
     m_layout->addWidget(m_usageChartView);
 
@@ -58,7 +59,8 @@ void GPUInfoWidget::init()
     m_memUsageChartView = new CustomChartView(
         this,
         0, 60, "",
-        0, memoryTotalGb, "Memory usage, Gb");
+        0, memoryTotalGb, "Memory usage, Gb",
+        QColor(0, 255, 0), QColor(0, 255, 0, 100));
     m_memUsageChartView->setMinimumHeight(300);
 
     m_layout->addWidget(m_memUsageChartView);
