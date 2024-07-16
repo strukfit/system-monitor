@@ -11,6 +11,8 @@
 
 class CustomChartView : public QChartView
 {
+	Q_OBJECT
+
 public:
 	CustomChartView(QWidget* parent = nullptr, double minPointsX = 0, double maxPointsX = 1, QString titleX = "", double minPointsY = 0, double maxPointsY = 1, QString titleY = "", QColor borderColor1 = QColor(150, 150, 250, 255), QColor fillColor1 = QColor(150, 150, 250, 100), QColor borderColor2 = QColor(230, 122, 50, 255), QColor fillColor2 = QColor(230, 122, 50, 100));
 
@@ -18,6 +20,12 @@ public:
 	void append(double data1, double data2);
 
 private:
+	Q_SIGNAL void dataReceived1(double data);
+	Q_SIGNAL void dataReceived2(double data);
+
+	Q_SLOT void updateSeries1(double data);
+	Q_SLOT void updateSeries2(double data);
+
 	double minY() const;
 	double maxY() const;
 	void setRangeY(double min, double max);

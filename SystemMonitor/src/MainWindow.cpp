@@ -10,6 +10,7 @@ MainWindow::MainWindow(QWidget* parent) :
     auto centralWidget = new QWidget(this);
     centralWidget->setStyleSheet("background-color: #161618;");
     auto layout = new QVBoxLayout(centralWidget);
+    layout->setContentsMargins(0, 0, 0, 0);
 
     auto childWidget = new QWidget(centralWidget);
     childWidget->setContentsMargins(0, 0, 0, 0);

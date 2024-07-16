@@ -66,7 +66,7 @@ void CustomScrollBar::setHoveredStyle()
 {
 	this->setStyleSheet(R"(
 			QScrollBar::vertical {
-				background-color: #2C2C2C;
+				background-color: #202025;
 				width: 12px;
 				border-radius: 5px;
 				margin: 0;

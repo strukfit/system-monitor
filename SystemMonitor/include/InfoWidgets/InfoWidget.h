@@ -13,7 +13,6 @@ public:
 	InfoWidget(QWidget* parent = nullptr);
 	~InfoWidget();
 
-	Q_SIGNAL void clicked();
 	virtual void updateInfo();
 
 protected:
@@ -21,7 +20,6 @@ protected:
 	virtual Q_SLOT void updateLabels();
 
 protected:
-	void mouseReleaseEvent(QMouseEvent* event) override;
 	bool event(QEvent* event) override;
 	void setDefaultStyle();
 

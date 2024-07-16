@@ -67,12 +67,26 @@ CustomChartView::CustomChartView(QWidget* parent, double minPointsX, double maxP
     
     this->setChart(chart);
     this->setRenderHint(QPainter::Antialiasing);
+
+    connect(this, &CustomChartView::dataReceived1, this, &CustomChartView::updateSeries1);
+    connect(this, &CustomChartView::dataReceived2, this, &CustomChartView::updateSeries2);
 }
 
 void CustomChartView::append(double data)
 {
+    emit dataReceived1(data);
     updateYAxisRange();
+}
 
+void CustomChartView::append(double data1, double data2)
+{
+    append(data1);
+    dataReceived2(data2);
+    updateYAxisRange();
+}
+
+void CustomChartView::updateSeries1(double data)
+{
     int size = m_dataPoints1.size();
     if (size > m_maxPointsX)
         m_dataPoints1.pop_back();
@@ -87,21 +101,17 @@ void CustomChartView::append(double data)
     m_lowerSeries1->append(size, 0);
 }
 
-void CustomChartView::append(double data1, double data2)
+void CustomChartView::updateSeries2(double data)
 {
-    append(data1);
-
-    updateYAxisRange();
-
     int size = m_dataPoints2.size();
     if (size > m_maxPointsX)
         m_dataPoints2.pop_back();
-    m_dataPoints2.push_front(data2);
+    m_dataPoints2.push_front(data);
 
     m_upperSeries2->clear();
     for (int i = 0; i < size; ++i)
         m_upperSeries2->append(i, m_dataPoints2[i]);
-    
+
     m_lowerSeries2->clear();
     m_lowerSeries2->append(0, 0);
     m_lowerSeries2->append(size, 0);

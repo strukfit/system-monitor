@@ -98,7 +98,7 @@ void DiskInfoWidget::updateLabels()
     QString labelText = templateText.arg("Active time").arg(m_diskInfo.activeTime()).arg('%');
     m_activeTimeLabel->setText(labelText);
 
-    labelText = templateText.arg("Average response time").arg(m_diskInfo.avgResponseTime()).arg(" ms");
+    labelText = templateText.arg("Average response time").arg(m_diskInfo.avgResponseTime(), 0, 'f', 5).arg(" ms");
     m_avgResponseTimeLabel->setText(labelText);
 
     auto readSpeed = QString::fromStdString(Converter::convertBytes(m_diskInfo.readSpeed()));

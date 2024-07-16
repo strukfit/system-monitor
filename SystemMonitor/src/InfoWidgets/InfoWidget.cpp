@@ -3,7 +3,7 @@
 InfoWidget::InfoWidget(QWidget* parent):
 	QWidget(parent)
 {
-	this->setContentsMargins(0, 20, 0, 20);
+	this->setContentsMargins(1, 20, 1, 20);
 	this->setAttribute(Qt::WA_StyledBackground, true);
 	setDefaultStyle();
 
@@ -27,18 +27,11 @@ void InfoWidget::updateLabels()
 {
 }
 
-void InfoWidget::mouseReleaseEvent(QMouseEvent* event)
-{
-	emit clicked();
-
-	QWidget::mouseReleaseEvent(event);
-}
-
 bool InfoWidget::event(QEvent* event)
 {
-	if (event->type() == QEvent::Enter)
+	/*if (event->type() == QEvent::Enter)
 	{
-		setStyleSheet("background-color: #212126; border-radius: 10px; border: 1px solid #363636;");
+		setStyleSheet("background-color: #212126; border-radius: 10px; border: 1px solid #00A0FF;");
 
 		QGraphicsDropShadowEffect* shadowEffect = new QGraphicsDropShadowEffect;
 		shadowEffect->setBlurRadius(30);
@@ -57,7 +50,7 @@ bool InfoWidget::event(QEvent* event)
 		this->setGraphicsEffect(nullptr);
 
 		return true;
-	}
+	}*/
 
 	return QWidget::event(event);
 }
