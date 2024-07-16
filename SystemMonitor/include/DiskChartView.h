@@ -7,6 +7,10 @@
 
 #include "Converter.h"
 
+#ifdef __linux__
+QT_CHARTS_USE_NAMESPACE
+#endif // __linux__
+
 
 class DiskChartView : public QChartView
 {

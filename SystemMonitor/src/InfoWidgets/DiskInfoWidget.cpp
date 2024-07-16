@@ -29,7 +29,7 @@ void DiskInfoWidget::init()
     title = QString("Disk %1").arg(m_diskInfo.diskLetter());
 #endif // WIN32
 #ifdef __linux__
-    title = QString("Disk %1").arg(QString::fromStdString(diskInfo.device()));
+    title = QString("Disk %1").arg(QString::fromStdString(m_diskInfo.device()));
 #endif // __linux__
     auto titleLabel = new QLabel(title, this);
     titleLabel->setAlignment(Qt::AlignLeft | Qt::AlignBottom);

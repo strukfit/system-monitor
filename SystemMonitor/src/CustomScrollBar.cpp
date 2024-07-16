@@ -6,11 +6,22 @@ CustomScrollBar::CustomScrollBar(QWidget* parent) :
 	setDefaultStyle();
 }
 
+#ifdef WIN32
 void CustomScrollBar::enterEvent(QEnterEvent* event)
 {
 	setHoveredStyle();
 	QWidget::enterEvent(event);
 }
+#endif // WIN32
+
+#ifdef __linux__
+void CustomScrollBar::enterEvent(QEvent* event)
+{
+	setHoveredStyle();
+	QWidget::enterEvent(event);
+}
+#endif // __linux__
+
 
 void CustomScrollBar::leaveEvent(QEvent* event)
 {

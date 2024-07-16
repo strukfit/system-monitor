@@ -16,12 +16,12 @@ class GPUInfoWidget : public InfoWidget
 {
 public:
 #ifdef _WIN32
-	GPUInfoWidget(QWidget* parent = nullptr, QString modelName = "", gpu::Type type = gpu::NVIDIA, nvmlDevice_t nvmlDevice = nullptr);
-	GPUInfoWidget(QWidget* parent = nullptr, QString modelName = "", gpu::Type type = gpu::AMD, IADLXGPUPtr adlxGpuPtr = nullptr, IADLXPerformanceMonitoringServicesPtr perfMonitoringServices = nullptr);
+	GPUInfoWidget(QWidget* parent = nullptr, QString modelName = "", gpu::Type type = gpu::UNKNOWN, nvmlDevice_t nvmlDevice = nullptr);
+	GPUInfoWidget(QWidget* parent = nullptr, QString modelName = "", gpu::Type type = gpu::UNKNOWN, IADLXGPUPtr adlxGpuPtr = nullptr, IADLXPerformanceMonitoringServicesPtr perfMonitoringServices = nullptr);
 #endif // _WIN32
 
 #ifdef __linux__
-	GPUInfoWidget(QWidget* parent = nullptr, std::string index, gpu::Type type);
+	GPUInfoWidget(QWidget* parent = nullptr, std::string index = "", gpu::Type type = gpu::UNKNOWN);
 #endif // __linux__
 
 	void updateInfo() override;

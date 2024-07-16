@@ -180,7 +180,9 @@ void MainWindow::initNvidiaCards(QWidget* parent, QLayout* layout)
     // Read the output a line at a time - each line should contain one GPU index. 
     while (fgets(index, sizeof(index) - 1, fp) != NULL) {
         // Extract the GPU index from the line. 
-        allGPUs.push_back(GPUInfo(index, gpu::NVIDIA));
+        auto gpuInfoWidget = new GPUInfoWidget(parent, index, gpu::NVIDIA);
+        allWidgets.push_back(gpuInfoWidget);
+        layout->addWidget(gpuInfoWidget);
     }
     pclose(fp);
 #endif // __linux__

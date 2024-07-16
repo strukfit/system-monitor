@@ -16,11 +16,12 @@ endif()
 
 find_package(QT NAMES Qt6 Qt5 REQUIRED COMPONENTS Core Widgets Charts)
 find_package(Qt${QT_VERSION_MAJOR}
-    COMPONENTS
+    REQUIRED COMPONENTS
         Core
         Widgets
         Charts
 )
+
 qt_standard_project_setup()
 
 file(GLOB_RECURSE SOURCES "src/*.cpp"  "include/*.h" "main.cpp")
@@ -77,10 +78,10 @@ if(WIN32)
     target_link_libraries(SystemMonitor PUBLIC ${NVML_LIBRARIES})
 endif()
 
-#set_target_properties(${CMAKE_PROJECT_NAME}
-#    PROPERTIES
-#        WIN32_EXECUTABLE TRUE
-#)
+set_target_properties(${CMAKE_PROJECT_NAME}
+    PROPERTIES
+        WIN32_EXECUTABLE TRUE
+)
 
 target_link_libraries(${CMAKE_PROJECT_NAME}
     PUBLIC

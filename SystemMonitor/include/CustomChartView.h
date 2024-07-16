@@ -8,6 +8,11 @@
 #include <QLabel>
 
 #include <deque>
+#include <cmath>
+
+#ifdef __linux__
+QT_CHARTS_USE_NAMESPACE
+#endif // __linux__
 
 class CustomChartView : public QChartView
 {
