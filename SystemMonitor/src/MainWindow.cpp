@@ -1,8 +1,5 @@
 #include "MainWindow.h"
 
-DiskChartView* MainWindow::diskChartView;
-CustomChartView* MainWindow::diskSpeedChartView;
-
 MainWindow::MainWindow(QWidget* parent) :
     QMainWindow(parent),
 #ifdef WIN32
@@ -36,15 +33,6 @@ MainWindow::MainWindow(QWidget* parent) :
     DiskInfo::setUpdateInterval(updateIntervalMs / 1000);
 #endif // __linux__
 
-    initDisks();
-
-    for (int i = 0; i < allDisks.size(); i++)
-    {
-        auto diskLabel = new QLabel(NULL, childWidget);
-        widgetsLayout->addWidget(diskLabel);
-        allDisksLabels.push_back(diskLabel);
-    }
-
     auto cpuInfoWidget = new CPUInfoWidget(childWidget);
     allWidgets.push_back(cpuInfoWidget);
     widgetsLayout->addWidget(cpuInfoWidget);
@@ -56,16 +44,7 @@ MainWindow::MainWindow(QWidget* parent) :
     initNvidiaCards(childWidget, widgetsLayout);
     initAmdCards(childWidget, widgetsLayout);
 
-    diskChartView = new DiskChartView(childWidget);
-    diskChartView->setMinimumHeight(500);
-    widgetsLayout->addWidget(diskChartView);
-
-    diskSpeedChartView = new CustomChartView(
-        childWidget,
-        0, 60, "\n",
-        0, 500, "Write/read speed, Kb/s");
-    diskSpeedChartView->setMinimumHeight(500);
-    widgetsLayout->addWidget(diskSpeedChartView);
+    initDisks(childWidget, widgetsLayout);
 
     scrollArea->setWidget(scrollAreaWidgetContents);
 
@@ -93,7 +72,7 @@ MainWindow::~MainWindow()
 #endif // WIN32
 }
 
-void MainWindow::initDisks()
+void MainWindow::initDisks(QWidget* parent, QLayout* layout)
 {
 #ifdef WIN32
     DWORD drivesMask = GetLogicalDrives();
@@ -101,7 +80,11 @@ void MainWindow::initDisks()
     {
         // If the bit is set, the disk exists
         if (drivesMask & 1)
-            allDisks.push_back(DiskInfo(letter));
+        {
+            auto diskInfoWidget = new DiskInfoWidget(parent, letter);
+            allWidgets.push_back(diskInfoWidget);
+            layout->addWidget(diskInfoWidget);
+        }
 
         drivesMask >>= 1;
     }
@@ -128,7 +111,9 @@ void MainWindow::initDisks()
         if (device.substr(0, 5) == "/dev/")
             device = device.substr(5);
 
-        allDisks.push_back(DiskInfo(device));
+        auto diskInfoWidget = new DiskInfoWidget(parent, device);
+        allWidgets.push_back(diskInfoWidget);
+        layout->addWidget(diskInfoWidget);
     }
     pclose(fp);
 #endif // __linux__
@@ -252,72 +237,11 @@ void MainWindow::initAmdCards(QWidget* parent, QLayout* layout)
 #endif // WIN32
 }
 
-void MainWindow::updateDiskAsync(DiskInfo& diskInfo, QLabel* diskLabel)
-{
-    diskInfo.updateInfo();
-    QString labelText = QString(
-        "DISK: %1\n"
-        "DISK_NAME: %2\n"
-        "DISK_ACTIVE_TIME: %3 %\n"
-        "DISK_USAGE: %4/%5\n"
-        "DISK_FREE_SPACE: %6\n"
-        "DISK_READ_SPEED: %7/s\n"
-        "DISK_WRITE_SPEED: %8/s\n"
-        "DISK_AVG_RESPONSE_TIME: %9 ms\n\n")
-#ifdef WIN32
-        .arg(QString::fromStdWString(diskInfo.diskLetter()))
-#elif __linux__
-        .arg(QString::fromStdString(diskInfo.device()))
-#else
-        .arg("");
-#endif 
-    .arg(QString::fromStdWString(diskInfo.modelName()))
-        .arg(diskInfo.activeTime())
-        .arg(QString::fromStdString(Converter::convertBytes(diskInfo.totalUsedBytes())))
-        .arg(QString::fromStdString(Converter::convertBytes(diskInfo.totalBytes())))
-        .arg(QString::fromStdString(Converter::convertBytes(diskInfo.totalFreeBytes())))
-        .arg(QString::fromStdString(Converter::convertBytes(diskInfo.readSpeed())))
-        .arg(QString::fromStdString(Converter::convertBytes(diskInfo.writeSpeed())))
-        .arg(diskInfo.avgResponseTime());
-
-    QMetaObject::invokeMethod(diskLabel, "setText", Qt::QueuedConnection, Q_ARG(QString, labelText));
-}
-
 void MainWindow::updateWidgets()
 {
-    /*
-    std::thread updateCPUThread(&CPUInfoWidget::updateInfo, cpuInfoWidget);
-    updateCPUThread.detach();
-
-    std::thread updateMEMThread(&MEMInfoWidget::updateInfo, memInfoWidget);
-    updateMEMThread.detach();
-
-    auto iGPU = allGPUs.begin();
-    auto iGPULabel = allGPUsLabels.begin();
-    for (; iGPU < allGPUs.end(); iGPU++, iGPULabel++)
-    {
-        std::thread updateGPUThread(updateGPUAsync, std::ref(*iGPU), *iGPULabel);
-        updateGPUThread.detach();
-    }*/
-
     for (auto& widget : allWidgets)
     {
         std::thread updateWidgetThread(&InfoWidget::updateInfo, widget);
         updateWidgetThread.detach();
     }
-
-    auto iDisk = allDisks.begin();
-    auto iDiskLabel = allDisksLabels.begin();
-    for (; iDisk < allDisks.end(); iDisk++, iDiskLabel++)
-    {
-        std::thread updateDiskThread(updateDiskAsync, std::ref(*iDisk), *iDiskLabel);
-        updateDiskThread.detach();
-    }
-
-    diskChartView->updateSpace(allDisks[0].totalFreeBytes(), allDisks[0].totalUsedBytes(), allDisks[0].totalBytes());
-    
-    QString writeSpeed = QString::fromStdString(Converter::convertBytes(allDisks[0].writeSpeed()));
-    QString readSpeed = QString::fromStdString(Converter::convertBytes(allDisks[0].readSpeed()));
-    QString labelText = QString("Write speed: %1\nRead speed: %2").arg(writeSpeed).arg(readSpeed);
-    diskSpeedChartView->append(allDisks[0].writeSpeed() / 1024., allDisks[0].readSpeed() / 1024.);
 }

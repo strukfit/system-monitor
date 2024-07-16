@@ -10,16 +10,12 @@
 
 #include "CustomChartView.h"
 #include "DiskChartView.h"
-
-#include "Info/CPUInfo.h"
-#include "Info/MEMInfo.h"
-#include "Info/DiskInfo.h"
-#include "Info/GPUInfo.h"
 #include "Converter.h"
 
 #include "InfoWidgets/CPUInfoWidget.h"
 #include "InfoWidgets/MEMInfoWidget.h"
 #include "InfoWidgets/GPUInfoWidget.h"
+#include "InfoWidgets/DiskInfoWidget.h"
 #include "CustomScrollBar.h"
 
 
@@ -33,11 +29,9 @@ public:
 private:
 	Q_SLOT void updateWidgets();
 
-	void initDisks();
+	void initDisks(QWidget* parent, QLayout* layout);
 	void initNvidiaCards(QWidget* parent, QLayout* layout);
 	void initAmdCards(QWidget* parent, QLayout* layout);
-
-	static void updateDiskAsync(DiskInfo& diskInfo, QLabel* diskLabel);
 
 #ifdef _WIN32
 	WMIManager wmiManager;
@@ -45,14 +39,5 @@ private:
 #endif
 
 	int updateIntervalMs;
-
-	std::vector<DiskInfo> allDisks;
-	std::vector<QLabel*> allDisksLabels;
-
 	std::vector<InfoWidget*> allWidgets;
-
-	/*CPUInfoWidget* cpuInfoWidget;
-	MEMInfoWidget* memInfoWidget;*/
-	static DiskChartView* diskChartView;
-	static CustomChartView* diskSpeedChartView;
 };
